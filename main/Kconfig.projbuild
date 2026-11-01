@@ -1,0 +1,52 @@
+
+menu "TCP-Serial Bridge Configuration"
+
+    menu "Ethernet Configuration"
+
+        config BRIDGE_ETH_IP
+            string "Static IPv4 address"
+            default "192.168.1.200"
+
+        config BRIDGE_ETH_NETMASK
+            string "Subnet mask"
+            default "255.255.255.0"
+
+        config BRIDGE_ETH_GATEWAY
+            string "Gateway"
+            default "192.168.1.1"
+
+        config BRIDGE_ETH_PHY_ADDR
+            int "Ethernet PHY address"
+            range -1 31
+            default -1
+            help
+                Set to -1 to let the driver find the PHY address.
+
+        config BRIDGE_ETH_PHY_RESET_GPIO
+            int "Ethernet PHY reset GPIO"
+            range -1 39
+            default 5
+
+        config BRIDGE_ETH_MDC_GPIO
+            int "Ethernet MDC GPIO"
+            range 0 39
+            default 23
+
+        config BRIDGE_ETH_MDIO_GPIO
+            int "Ethernet MDIO GPIO"
+            range 0 39
+            default 18
+
+        config BRIDGE_ETH_RMII_CLK_GPIO
+            int "External RMII clock GPIO"
+            range 0 39
+            default 0
+
+        config BRIDGE_TCP_PORT
+            int "TCP server port"
+            range 1 65535
+            default 4001
+
+    endmenu
+
+endmenu
