@@ -1,6 +1,8 @@
 
 #include "network.h"
 
+#include "bridge.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <stdatomic.h>
@@ -29,7 +31,6 @@
 #define TCP_LISTEN_QUEUE         1
 #define TCP_SELECT_TIMEOUT_S     1
 #define TCP_RETRY_DELAY_MS       1000
-#define TCP_RX_BUFFER_SIZE       256
 
 // A peer that vanishes without closing is dropped after about 12 seconds.
 #define TCP_KEEPALIVE_IDLE_S     5
@@ -47,7 +48,6 @@ static esp_eth_netif_glue_handle_t s_eth_glue = NULL;
 static TaskHandle_t s_server_task = NULL;
 static SemaphoreHandle_t s_server_stopped = NULL;
 static atomic_bool s_server_stop_requested = false;
-static atomic_bool s_link_lost = false;
 
 static void log_link_up(void)
 {
@@ -81,7 +81,7 @@ static void on_eth_event(void *arg, esp_event_base_t event_base,
         break;
     case ETHERNET_EVENT_DISCONNECTED:
         ESP_LOGW(TAG, "Ethernet link down");
-        atomic_store(&s_link_lost, true);
+        bridge_request_disconnect();
         break;
     case ETHERNET_EVENT_STOP:
         ESP_LOGI(TAG, "Ethernet stopped");
@@ -321,18 +321,7 @@ static void configure_client_socket(int fd)
     set_socket_option(fd, IPPROTO_TCP, TCP_KEEPCNT, TCP_KEEPALIVE_PROBES);
 }
 
-static void close_client(int *client_fd, const char *reason)
-{
-    if (*client_fd < 0) {
-        return;
-    }
-
-    ESP_LOGI(TAG, "TCP client closed: %s", reason);
-    close(*client_fd);
-    *client_fd = -1;
-}
-
-static void accept_client(int *listen_fd, int *client_fd)
+static void accept_client(int *listen_fd)
 {
     struct sockaddr_in peer = {0};
     socklen_t peer_length = sizeof(peer);
@@ -355,107 +344,71 @@ static void accept_client(int *listen_fd, int *client_fd)
     char peer_ip[INET_ADDRSTRLEN] = "";
     inet_ntop(AF_INET, &peer.sin_addr, peer_ip, sizeof(peer_ip));
 
-    if (*client_fd >= 0) {
+    configure_client_socket(fd);
+
+    // After a successful attach the socket belongs to the bridge.
+    const esp_err_t err = bridge_attach_client(fd);
+
+    if (err == ESP_OK) {
+        ESP_LOGI(TAG, "TCP client connected: %s:%u", peer_ip, ntohs(peer.sin_port));
+    } else if (err == ESP_ERR_INVALID_STATE) {
         ESP_LOGW(TAG, "TCP client %s:%u rejected: a client is already connected",
                  peer_ip, ntohs(peer.sin_port));
         close(fd);
-        return;
-    }
-
-    configure_client_socket(fd);
-    *client_fd = fd;
-    ESP_LOGI(TAG, "TCP client connected: %s:%u", peer_ip, ntohs(peer.sin_port));
-}
-
-// Reading is what reveals a disconnect. Data is dropped until the bridge exists.
-static void read_client(int *client_fd)
-{
-    uint8_t buffer[TCP_RX_BUFFER_SIZE];
-    const int length = recv(*client_fd, buffer, sizeof(buffer), MSG_DONTWAIT);
-
-    if (length > 0) {
-        ESP_LOGI(TAG, "TCP client data discarded: %d bytes", length);
-    } else if (length == 0) {
-        close_client(client_fd, "disconnected by peer");
-    } else if (errno != EAGAIN && errno != EWOULDBLOCK) {
-        ESP_LOGW(TAG, "TCP client receive failed: errno %d", errno);
-        close_client(client_fd, "socket error");
+    } else {
+        ESP_LOGE(TAG, "TCP client %s:%u rejected: %s", peer_ip,
+                 ntohs(peer.sin_port), esp_err_to_name(err));
+        close(fd);
     }
 }
 
 /*
  * The listener stays open across link changes: being bound to INADDR_ANY, it
- * is unaffected when ESP-NETIF clears the IP address. lwIP aborts the client
- * socket on link down, which wakes select(); s_link_lost covers any other case.
+ * is unaffected when ESP-NETIF clears the IP address.
  */
 static void tcp_server_task(void *arg)
 {
     int listen_fd = -1;
-    int client_fd = -1;
 
     while (!atomic_load(&s_server_stop_requested)) {
-        if (atomic_exchange(&s_link_lost, false)) {
-            close_client(&client_fd, "Ethernet link down");
-        }
-
         if (listen_fd < 0) {
             listen_fd = open_listener();
         }
 
-        if (listen_fd < 0 && client_fd < 0) {
+        if (listen_fd < 0) {
             vTaskDelay(pdMS_TO_TICKS(TCP_RETRY_DELAY_MS));
             continue;
         }
 
         fd_set read_fds;
         FD_ZERO(&read_fds);
-
-        if (listen_fd >= 0) {
-            FD_SET(listen_fd, &read_fds);
-        }
-
-        if (client_fd >= 0) {
-            FD_SET(client_fd, &read_fds);
-        }
+        FD_SET(listen_fd, &read_fds);
 
         struct timeval timeout = {.tv_sec = TCP_SELECT_TIMEOUT_S};
-        const int max_fd = listen_fd > client_fd ? listen_fd : client_fd;
-        const int ready = select(max_fd + 1, &read_fds, NULL, NULL, &timeout);
+        const int ready = select(listen_fd + 1, &read_fds, NULL, NULL, &timeout);
 
         if (ready < 0) {
             if (errno == EINTR) {
                 continue;
             }
 
-            // Out of memory says nothing about the sockets, so keep them.
+            // Out of memory says nothing about the socket, so keep it.
             if (errno == ENOMEM) {
                 vTaskDelay(pdMS_TO_TICKS(TCP_RETRY_DELAY_MS));
                 continue;
             }
 
             ESP_LOGE(TAG, "TCP server select failed: errno %d", errno);
-            close_client(&client_fd, "server error");
-
-            if (listen_fd >= 0) {
-                close(listen_fd);
-                listen_fd = -1;
-            }
-
+            close(listen_fd);
+            listen_fd = -1;
             vTaskDelay(pdMS_TO_TICKS(TCP_RETRY_DELAY_MS));
             continue;
         }
 
-        // Client first, so a departing client frees the slot for a waiting one.
-        if (client_fd >= 0 && FD_ISSET(client_fd, &read_fds)) {
-            read_client(&client_fd);
-        }
-
-        if (listen_fd >= 0 && FD_ISSET(listen_fd, &read_fds)) {
-            accept_client(&listen_fd, &client_fd);
+        if (ready > 0) {
+            accept_client(&listen_fd);
         }
     }
-
-    close_client(&client_fd, "server stopped");
 
     if (listen_fd >= 0) {
         close(listen_fd);
@@ -476,7 +429,6 @@ esp_err_t network_start_server(void)
                         "Failed to create TCP server semaphore");
 
     atomic_store(&s_server_stop_requested, false);
-    atomic_store(&s_link_lost, false);
 
     if (xTaskCreate(tcp_server_task, "tcp_server", TCP_SERVER_TASK_STACK, NULL,
                     TCP_SERVER_TASK_PRIORITY, &s_server_task) != pdPASS) {
@@ -503,4 +455,7 @@ void network_stop_server(void)
     vSemaphoreDelete(s_server_stopped);
     s_server_stopped = NULL;
     s_server_task = NULL;
+
+    // Requested after the task ends, so no client can be attached later.
+    bridge_request_disconnect();
 }

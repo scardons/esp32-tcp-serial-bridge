@@ -1,0 +1,24 @@
+{
+  "name": "esp32-tcp-serial-bridge-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Integration tests that run against the ESP32 TCP-Serial Bridge over TCP",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "test": "jest",
+    "test:h6": "RUN_H6=true BRIDGE_REPORT_PATH=docs/test-reports/automated-test-results-h6.md jest tests/integration/stalled-client.test.ts",
+    "manual:h7": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tests/manual/link-recovery.ts h7",
+    "manual:h8": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tests/manual/link-recovery.ts h8",
+    "test:host": "bash tests/host/run.sh",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/jest": "30.0.0",
+    "@types/node": "24.6.2",
+    "jest": "30.5.2",
+    "ts-jest": "29.4.15",
+    "typescript": "5.9.3"
+  }
+}

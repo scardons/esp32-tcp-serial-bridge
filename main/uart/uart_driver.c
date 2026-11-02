@@ -5,12 +5,16 @@
 #include "esp_check.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/portmacro.h"
+#include "freertos/queue.h"
 
 #define BRIDGE_UART_PORT       UART_NUM_1
 #define BRIDGE_UART_TX_PIN     32
 #define BRIDGE_UART_RX_PIN     33
 #define BRIDGE_UART_BAUD_RATE  115200
 #define BRIDGE_UART_BUF_SIZE   2048
+#define BRIDGE_UART_EVENT_QUEUE_SIZE 32
+
+static QueueHandle_t s_event_queue = NULL;
 
 /**
  * UART Driver Implementation
@@ -35,8 +39,8 @@ esp_err_t uart_driver_init(void)
             BRIDGE_UART_PORT,
             BRIDGE_UART_BUF_SIZE,
             BRIDGE_UART_BUF_SIZE,
-            0,
-            NULL,
+            BRIDGE_UART_EVENT_QUEUE_SIZE,
+            &s_event_queue,
             0
         ),
         "UART_DRIVER",
@@ -71,6 +75,34 @@ int uart_driver_write(const uint8_t *data, size_t length)
     }
 
     return uart_write_bytes(BRIDGE_UART_PORT, data, length);
+}
+
+uart_driver_event_t uart_driver_wait_event(uint32_t timeout_ms)
+{
+    uart_event_t event;
+    TickType_t ticks = pdMS_TO_TICKS(timeout_ms);
+
+    // Short waits would round down to no wait, and the caller would spin.
+    if (ticks == 0 && timeout_ms > 0) {
+        ticks = 1;
+    }
+
+    if (s_event_queue == NULL ||
+        xQueueReceive(s_event_queue, &event, ticks) != pdTRUE) {
+        return UART_DRIVER_EVENT_NONE;
+    }
+
+    switch (event.type) {
+    case UART_FIFO_OVF:
+        return UART_DRIVER_EVENT_RX_OVERFLOW;
+    case UART_FRAME_ERR:
+    case UART_PARITY_ERR:
+        return UART_DRIVER_EVENT_RX_ERROR;
+    case UART_BUFFER_FULL:
+        return UART_DRIVER_EVENT_RX_BUFFER_FULL;
+    default:
+        return UART_DRIVER_EVENT_NONE;
+    }
 }
 
 int uart_driver_read(

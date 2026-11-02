@@ -23,16 +23,19 @@ esp_err_t network_init(void);
 /**
  * Starts the TCP server task on CONFIG_BRIDGE_TCP_PORT.
  *
- * The server accepts one client at a time and closes any
- * other connection. It can start before the Ethernet link
- * is up and keeps listening across link changes.
+ * The server hands each accepted client to the bridge, which
+ * allows one at a time. Any other connection is closed. It can
+ * start before the Ethernet link is up and keeps listening
+ * across link changes. The bridge must already be running.
  */
 esp_err_t network_start_server(void);
 
 /**
- * Stops the TCP server and closes its sockets.
+ * Stops the TCP server, closes its listening socket and asks
+ * the bridge to end the active session.
  *
- * Blocks until the server task has finished.
+ * Blocks until the server task has finished. It does not wait
+ * for the bridge to close the client.
  */
 void network_stop_server(void);
 

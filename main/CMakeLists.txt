@@ -15,6 +15,8 @@ idf_component_register(
         "network/network.c"
         "uart/uart_driver.c"
         "bridge/bridge.c"
+        "bridge/loss_reporter.c"
+        "bridge/loss_stats.c"
 
     INCLUDE_DIRS
         "."

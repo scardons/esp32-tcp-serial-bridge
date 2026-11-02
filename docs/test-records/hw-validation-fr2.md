@@ -8,6 +8,7 @@
 | Tested by | Project operator |
 | Record prepared by | Claude Code, from project history and retained logs |
 | Base commit | `25847e6`, with uncommitted changes (`25847e6-dirty`) |
+| Updated | 2026-11-02, adding evidence from the bridge firmware `23f991546` (base `78290c9-dirty`) |
 
 ## 1. Purpose and Scope
 
@@ -26,8 +27,10 @@ Each result cites one or more of these sources.
 | E2 | Captured serial log | ESP-IDF monitor session ending 12:53:22, firmware `58bae9063` | One boot. Truncated at 4,096 bytes, in the middle of a log line |
 | E3 | Captured tool output | `idf.py` flash logs | Successful flash at 12:53:18. Failed flash attempts around 12:42 and 12:44 |
 | E4 | Operator-supplied log excerpts | Serial lines provided by the operator for FR-2 | Without device timestamps |
+| E7 | Captured serial log | ESP-IDF monitor session ending 14:11:59, firmware `23f991546` | One continuous boot, about 865 s of device uptime. Complete, not truncated |
+| E8 | Captured tool output | `idf.py` flash log | Bridge firmware flashed and hash verified at 13:57:17 |
 
-E2 and E3 come from `build/log/`, which Git ignores and `idf.py fullclean` can delete. The excerpts in this record are their preserved copy.
+E2, E3, E7 and E8 come from `build/log/`, which Git ignores and `idf.py fullclean` can delete. The excerpts in this record are their preserved copy.
 
 ## 3. Test Environment
 
@@ -60,6 +63,7 @@ E2 and E3 come from `build/log/`, which Git ignores and `idf.py fullclean` can d
 | Build | ELF SHA256 | Flashed | Content |
 |---|---|---|---|
 | TCP server build | `58bae9063...` | 12:53:18 (E3) | Ethernet, static IP and TCP server |
+| Bridge build | `23f991546...` | 13:57:17 (E8) | Client socket moved to the bridge task. Used for HW-FR2-008 to HW-FR2-013 |
 
 The full ELF SHA256 is `58bae90631db66e9c7767aee1d96e16d823b32e3a4e26bb5f2eefdcfdee8199a`.
 
@@ -159,6 +163,36 @@ NETWORK: TCP client connected: 192.168.1.170:56892
 - `nc` can report `succeeded!` for a rejected client, because the TCP handshake completes before the server closes the socket. The rejection is confirmed by the serial log.
 - The `nc` terminal output and the exact way Client A was closed were not retained.
 
+### Regression on the Bridge Firmware (H1)
+
+The bridge firmware moved the client socket from the server task to the bridge task, so FR-2 was repeated. The client close message now comes from `BRIDGE:`. The log does not label tests. Each session was matched to a planned test by order and duration, so the match is an inference. Terminal output from the client was not retained for any session, and the test plan commands are shown as the intended procedure.
+
+| Test ID | Test | Expected | Actual | Result |
+|---|---|---|---|---|
+| HW-FR2-008 | Server starts on port 4001 | Listening message | Logged at uptime 2.98 s | PASS |
+| HW-FR2-009 | Client A connects | Connection logged | Connected from port 49781 | PASS |
+| HW-FR2-010 | Client B rejected while A is active | Rejection logged | Port 63771 rejected, 10.0 s after A connected | PASS |
+| HW-FR2-011 | Client A disconnects | `disconnected by peer` | Logged | PASS |
+| HW-FR2-012 | Client B reconnects without a restart | New connection accepted | Port 56058 connected. No reset in the session | PASS |
+| HW-FR2-013 | Rejection and recovery during a rapid reconnection (H5) | Rejected while busy, accepted afterwards | Port 60088 rejected, port 60090 accepted about 120 ms later | PASS |
+
+**Evidence (E7)**
+
+```text
+I (2976) NETWORK: TCP server listening on port 4001
+I (105786) NETWORK: TCP client connected: 192.168.1.170:49781
+W (115796) NETWORK: TCP client 192.168.1.170:63771 rejected: a client is already connected
+I (142486) BRIDGE: TCP client closed: disconnected by peer
+I (149286) NETWORK: TCP client connected: 192.168.1.170:56058
+```
+
+```text
+W (546626) NETWORK: TCP client 192.168.1.170:60088 rejected: a client is already connected
+W (546636) BRIDGE: TCP client send failed: errno 104
+I (546636) BRIDGE: TCP client closed: socket error
+I (546746) NETWORK: TCP client connected: 192.168.1.170:60090
+```
+
 ## 6. Troubleshooting Note
 
 Before the FR-2 tests, a connection to port 4001 returned `Connection refused`. The board was still running the Ethernet build, `6f7d38aea`, which has no TCP server. Flash attempts around 12:42 and 12:44 had failed (E3), and their cause was not recorded in the portion reviewed. The flash at 12:53:18 succeeded, and E2 confirms that the board booted the TCP server build. This was a deployment issue, not a firmware defect.
@@ -167,22 +201,22 @@ Before the FR-2 tests, a connection to port 4001 returned `Connection refused`. 
 
 | Requirement | Status | Basis |
 |---|---|---|
-| FR-2 | **PASS — Hardware Validated** | HW-FR2-001 to HW-FR2-007 |
-| FR-3 | Pending | No hardware validation recorded |
-| FR-4 | Pending | No hardware validation recorded |
-| FR-5 | Pending | No hardware validation recorded |
-| FR-6 | Pending | No hardware validation recorded |
-| FR-7 | Pending | No hardware validation recorded |
-| FR-8 | Partially validated, **not complete** | Normal client disconnection (HW-FR2-005, HW-FR2-006) was observed. Half-open connection detection and Ethernet disconnection scenarios remain pending |
+| FR-2 | **PASS — Hardware Validated** | HW-FR2-001 to HW-FR2-013 |
+| FR-3 | PARTIAL | See `hw-validation-fr3.md` |
+| FR-4 | PARTIAL | See `hw-validation-fr4.md` |
+| FR-5 | Pending | See `hw-validation-fr5.md` |
+| FR-6 | Pending | See `hw-validation-fr6.md` |
+| FR-7 | Pending | See `hw-validation-fr7.md` |
+| FR-8 | PARTIAL, **not complete** | See `hw-validation-fr8.md` |
 
 The text of FR-3 through FR-8 is not stored in this repository, so their status is limited to what this record can show.
 
 ## 8. Known Limitations
 
-1. **Log timestamps:** the E4 excerpts have no device timestamps, so the sequence relies on the operator's order. The absence of a reboot is the operator's statement.
+1. **Log timestamps:** the E4 excerpts have no device timestamps. HW-FR2-008 to HW-FR2-013 have complete timestamped logs.
 2. **Firmware traceability:** the tested firmware was built from uncommitted changes, so the ELF SHA256 is the only exact identifier. It cannot yet be tied to a commit.
 3. **Network topology:** the path between Ubuntu and the ESP32 was not confirmed. See section 3.4.
-4. **TCP data:** data sent by clients is discarded, because the bridge is not implemented.
+4. **TCP data:** in the builds before the bridge, client data was discarded. Bridge data validation is in `hw-validation-fr3.md` and `hw-validation-fr4.md`.
 
 ## 9. Tests Pending
 
@@ -192,7 +226,6 @@ These tests were proposed but have no retained evidence, so they are not reporte
 |---|---|---|
 | 1 | 20 consecutive connect and disconnect cycles, to detect socket leaks | FR-2 robustness |
 | 2 | 20 consecutive rejected connections while a client stays connected | FR-2 robustness |
-| 3 | Ethernet disconnection with a TCP client connected, then reconnection without restart | FR-8 |
+| 3 | New connection after Ethernet recovery, with retained evidence. See `hw-validation-fr8.md` | FR-8 |
 | 4 | Half-open client detection, with the expected drop after about 12 s | FR-8 |
 | 5 | Ethernet outage longer than 2 minutes, then TCP reconnection | FR-8 |
-| 6 | Bidirectional TCP-to-UART data transfer, once the bridge exists | Pending requirements |
