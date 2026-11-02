@@ -3,6 +3,8 @@ menu "TCP-Serial Bridge Configuration"
 
     menu "Ethernet Configuration"
 
+        comment "RMII REF_CLK is fixed: 50 MHz input from the PHY on GPIO0"
+
         config BRIDGE_ETH_IP
             string "Static IPv4 address"
             default "192.168.1.200"
@@ -14,6 +16,9 @@ menu "TCP-Serial Bridge Configuration"
         config BRIDGE_ETH_GATEWAY
             string "Gateway"
             default "192.168.1.1"
+            help
+                IPv4 gateway of the local network. Only traffic leaving
+                the subnet uses it.
 
         config BRIDGE_ETH_PHY_ADDR
             int "Ethernet PHY address"
@@ -24,28 +29,43 @@ menu "TCP-Serial Bridge Configuration"
 
         config BRIDGE_ETH_PHY_RESET_GPIO
             int "Ethernet PHY reset GPIO"
-            range -1 39
+            range 0 33
             default 5
+            help
+                The PHY provides the RMII clock and stays in reset until
+                this pin is driven high, so a reset GPIO is mandatory on
+                the ESP32-Ethernet-Kit. GPIO34-39 are input-only.
 
         config BRIDGE_ETH_MDC_GPIO
             int "Ethernet MDC GPIO"
-            range 0 39
+            range 0 33
             default 23
+            help
+                GPIO34-39 are input-only and cannot be used.
 
         config BRIDGE_ETH_MDIO_GPIO
             int "Ethernet MDIO GPIO"
-            range 0 39
+            range 0 33
             default 18
-
-        config BRIDGE_ETH_RMII_CLK_GPIO
-            int "External RMII clock GPIO"
-            range 0 39
-            default 0
+            help
+                GPIO34-39 are input-only and cannot be used.
 
         config BRIDGE_TCP_PORT
             int "TCP server port"
             range 1 65535
             default 4001
+
+    endmenu
+
+    menu "Diagnostics"
+
+        config BRIDGE_UART_LOOPBACK_TEST
+            bool "Run UART1 loopback test at boot"
+            default n
+            help
+                Sends a test payload through UART1 once at boot and checks
+                that it is received back. Requires GPIO32 and GPIO33 to be
+                connected together.
 
     endmenu
 

@@ -9,10 +9,14 @@
 #include "esp_err.h"
 #include "esp_log.h"
 #include "esp_timer.h"
+#include "sdkconfig.h"
 
+#include "network.h"
 #include "uart_driver.h"
 
-static const char *TAG = "UART_LOOPBACK";
+static const char *TAG = "MAIN";
+
+#if CONFIG_BRIDGE_UART_LOOPBACK_TEST
 
 #define LOOPBACK_TIMEOUT_MS 1000
 
@@ -158,9 +162,9 @@ static void run_uart_loopback_test(void)
 }
 
 /**
- * Main application entry point.
+ * Initializes UART1 and runs the loopback test once.
  */
-void app_main(void)
+static void run_uart_diagnostics(void)
 {
     ESP_LOGI(TAG, "================================");
     ESP_LOGI(TAG, "ESP32 UART1 LOOPBACK TEST");
@@ -199,4 +203,36 @@ void app_main(void)
     run_uart_loopback_test();
 
     ESP_LOGI(TAG, "Loopback test finished");
+}
+
+#endif // CONFIG_BRIDGE_UART_LOOPBACK_TEST
+
+/**
+ * Main application entry point.
+ */
+void app_main(void)
+{
+    esp_err_t err = network_init();
+
+    if (err != ESP_OK) {
+        ESP_LOGE(
+            TAG,
+            "Network initialization failed: %s",
+            esp_err_to_name(err)
+        );
+    } else {
+        err = network_start_server();
+
+        if (err != ESP_OK) {
+            ESP_LOGE(
+                TAG,
+                "TCP server start failed: %s",
+                esp_err_to_name(err)
+            );
+        }
+    }
+
+#if CONFIG_BRIDGE_UART_LOOPBACK_TEST
+    run_uart_diagnostics();
+#endif
 }
