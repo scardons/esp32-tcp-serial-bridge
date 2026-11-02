@@ -8,6 +8,7 @@
 | Tested by | Project operator |
 | Record prepared by | Claude Code, from project history and retained logs |
 | Base commit | `25847e6`, with uncommitted changes (`25847e6-dirty`) |
+| Updated | 2026-11-02, adding evidence from the bridge firmware `23f991546` (base `78290c9-dirty`) |
 
 ## 1. Purpose and Scope
 
@@ -28,8 +29,10 @@ Each result cites one or more of these sources.
 | E3 | Captured tool output | `idf.py` flash logs | Successful flash at 11:57:14 |
 | E5 | Captured tool output | `ping` run from Ubuntu at 12:49:15, firmware `6f7d38aea` | Run by Claude Code during troubleshooting |
 | E6 | Operator report | Operator statement that the Ethernet recovery tests passed | No raw output retained |
+| E7 | Captured serial log | ESP-IDF monitor session ending 14:11:59, firmware `23f991546` | One continuous boot, about 865 s of device uptime. Complete, not truncated |
+| E8 | Captured tool output | `idf.py` flash log | Bridge firmware flashed and hash verified at 13:57:17 |
 
-E1, E2 and E3 come from `build/log/`, which Git ignores and `idf.py fullclean` can delete. The excerpts in this record are their preserved copy.
+E1, E2, E3, E7 and E8 come from `build/log/`, which Git ignores and `idf.py fullclean` can delete. The excerpts in this record are their preserved copy.
 
 ## 3. Test Environment
 
@@ -61,6 +64,7 @@ E1, E2 and E3 come from `build/log/`, which Git ignores and `idf.py fullclean` c
 | Build | ELF SHA256 | Flashed | Content |
 |---|---|---|---|
 | Ethernet build | `6f7d38aea...` | 11:57:14 (E3) | Ethernet and static IP |
+| Bridge build | `23f991546...` | 13:57:17 (E8) | Ethernet, static IP, TCP server and bridge. Used for HW-FR1-007 and HW-FR1-008 |
 
 The full ELF SHA256 is `6f7d38aea8fd76be789f07af7b3f1691cb46d3c57ae0354895fe5f18691775fb`.
 
@@ -99,6 +103,8 @@ idf.py -p /dev/ttyUSB1 monitor
 | HW-FR1-004 | Ping from Ubuntu | E5 | PASS |
 | HW-FR1-005 | Link disconnection and restoration | E1 | PASS |
 | HW-FR1-006 | Static IP recovered after link restoration | E6 | PASS, with the evidence limitation below |
+| HW-FR1-007 | Boot regression on the bridge firmware | E7 | PASS |
+| HW-FR1-008 | Static IP recovered after a 66 s outage, with serial evidence | E7 | PASS |
 
 ### HW-FR1-001: Ethernet Initialization
 
@@ -210,20 +216,58 @@ The last line is cut off in the captured log.
 
 **Actual:** The operator reported that the recovery tests passed (E6).
 
-**Evidence limitation:** The retained log ends in the middle of the link-up line, before any `IPv4 ready` message. No serial line or post-recovery ping from this test was retained. This result therefore rests on the operator report, not on captured output.
+**Evidence limitation:** The retained log ends in the middle of the link-up line, before any `IPv4 ready` message. No serial line or post-recovery ping from this test was retained. This result therefore rests on the operator report, not on captured output. HW-FR1-008 later captured the recovery on the bridge firmware.
+
+### HW-FR1-007: Boot Regression on the Bridge Firmware
+
+**Procedure:** Boot the bridge firmware with the Ethernet cable connected.
+
+**Expected:** Ethernet, link speed and static IP behave as in HW-FR1-001 to HW-FR1-003.
+
+**Actual:** All values matched. The PHY was found at address 1.
+
+**Evidence (E7)**
+
+```text
+I (266) app_init: ELF file SHA256:  23f991546...
+I (876) NETWORK: Ethernet driver installed, PHY address 1
+I (2976) NETWORK: Ethernet started
+I (2976) NETWORK: Ethernet link up: 100 Mbps, full duplex, MAC c0:cd:d6:61:ae:b3
+I (2986) NETWORK: IPv4 ready: 192.168.1.200, mask 255.255.255.0, gateway 192.168.1.1
+```
+
+### HW-FR1-008: Static IP Recovery with Serial Evidence
+
+**Procedure**
+
+1. Disconnect the Ethernet cable.
+2. Reconnect it and observe the log.
+
+**Expected:** The same static IP returns without a reboot.
+
+**Actual:** The link returned 66.0 s after the loss, and the static configuration was restored in the same logged millisecond. No reset appears in the session.
+
+**Evidence (E7)**
+
+```text
+W (798976) NETWORK: Ethernet link down
+I (864976) NETWORK: Ethernet link up: 100 Mbps, full duplex, MAC c0:cd:d6:61:ae:b3
+I (864976) esp_netif_handlers: eth ip: 192.168.1.200, mask: 255.255.255.0, gw: 192.168.1.1
+I (864976) NETWORK: IPv4 ready: 192.168.1.200, mask 255.255.255.0, gateway 192.168.1.1
+```
 
 ## 6. Final Status
 
 | Requirement | Status | Basis |
 |---|---|---|
-| FR-1 | **PASS — Hardware Validated** | HW-FR1-001 to HW-FR1-006 |
-| FR-8 | Partially validated, **not complete** | Link loss detection (HW-FR1-005) was observed. Half-open connection detection and Ethernet disconnection scenarios remain pending |
+| FR-1 | **PASS — Hardware Validated** | HW-FR1-001 to HW-FR1-008 |
+| FR-8 | Partially validated, **not complete** | See `hw-validation-fr8.md` |
 
 ## 7. Known Limitations
 
-1. **Static IP recovery evidence:** HW-FR1-006 rests on an operator report, because the serial log was truncated first.
-2. **FR-1 on the current firmware:** the full FR-1 sequence ran on the Ethernet build. On the TCP server build, E2 captures the boot only up to the link-up line, and the FR-2 connections show that the device was reachable. The link recovery tests were not repeated on this build.
-3. **Short test duration:** the only captured link outage lasted about 16 s.
+1. **Static IP recovery evidence:** HW-FR1-006 rests on an operator report, because the serial log was truncated first. HW-FR1-008 provides serial evidence on the bridge firmware.
+2. **Current firmware coverage:** on the bridge firmware, boot and link recovery have serial evidence, but ping has no retained evidence.
+3. **Outage duration:** the longest captured link outage lasted 66.0 s.
 4. **Firmware traceability:** the tested firmware was built from uncommitted changes, so the ELF SHA256 is the only exact identifier. It cannot yet be tied to a commit.
 5. **Network topology:** the path between Ubuntu and the ESP32 was not confirmed. See section 3.4.
 6. **Generic PHY driver:** speed and duplex are read through autonegotiation. A switch port with a forced speed was not tested.
@@ -235,8 +279,7 @@ These tests were proposed but have no retained evidence, so they are not reporte
 | Item | Test | Requirement |
 |---|---|---|
 | 1 | Ethernet outage longer than 2 minutes, then ping | FR-1, FR-8 |
-| 2 | Ping and static IP confirmation after link recovery, with serial evidence | FR-1 |
-| 3 | Link recovery tests repeated on the TCP server build | FR-1, FR-8 |
-| 4 | Boot with no cable connected, then connect it | FR-1 |
-| 5 | Repeated resets and power cycles | FR-1 |
-| 6 | Packet capture confirming that the device sends no DHCP traffic | FR-1 |
+| 2 | Ping after link recovery, with retained output | FR-1 |
+| 3 | Boot with no cable connected, then connect it | FR-1 |
+| 4 | Repeated resets and power cycles | FR-1 |
+| 5 | Packet capture confirming that the device sends no DHCP traffic | FR-1 |

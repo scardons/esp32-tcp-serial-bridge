@@ -1,4 +1,5 @@
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
@@ -11,6 +12,8 @@
 #include "esp_timer.h"
 #include "sdkconfig.h"
 
+#include "bridge.h"
+#include "loss_reporter.h"
 #include "network.h"
 #include "uart_driver.h"
 
@@ -162,30 +165,14 @@ static void run_uart_loopback_test(void)
 }
 
 /**
- * Initializes UART1 and runs the loopback test once.
+ * Runs the loopback test once. UART1 must already be initialized,
+ * and the bridge must not be running yet.
  */
 static void run_uart_diagnostics(void)
 {
     ESP_LOGI(TAG, "================================");
     ESP_LOGI(TAG, "ESP32 UART1 LOOPBACK TEST");
     ESP_LOGI(TAG, "================================");
-
-    /*
-     * Initialize UART1 using the existing UART driver.
-     */
-    esp_err_t err = uart_driver_init();
-
-    if (err != ESP_OK) {
-        ESP_LOGE(
-            TAG,
-            "UART initialization failed: %s",
-            esp_err_to_name(err)
-        );
-
-        return;
-    }
-
-    ESP_LOGI(TAG, "UART1 initialized successfully");
 
     ESP_LOGI(
         TAG,
@@ -208,10 +195,65 @@ static void run_uart_diagnostics(void)
 #endif // CONFIG_BRIDGE_UART_LOOPBACK_TEST
 
 /**
+ * Starts UART1 and the bridge. The bridge task is the only
+ * user of UART1 once it is running.
+ */
+static esp_err_t start_bridge(void)
+{
+    esp_err_t err = uart_driver_init();
+
+    if (err != ESP_OK) {
+        ESP_LOGE(
+            TAG,
+            "UART initialization failed: %s",
+            esp_err_to_name(err)
+        );
+
+        return err;
+    }
+
+    ESP_LOGI(TAG, "UART1 initialized successfully");
+
+#if CONFIG_BRIDGE_UART_LOOPBACK_TEST
+    run_uart_diagnostics();
+#endif
+
+    err = bridge_start();
+
+    if (err != ESP_OK) {
+        ESP_LOGE(
+            TAG,
+            "Bridge start failed: %s",
+            esp_err_to_name(err)
+        );
+
+        return err;
+    }
+
+    // The bridge can run without the report, so this is not fatal.
+    const esp_err_t report_err = loss_reporter_start();
+
+    if (report_err != ESP_OK) {
+        ESP_LOGE(
+            TAG,
+            "Loss reporter start failed: %s",
+            esp_err_to_name(report_err)
+        );
+    }
+
+    return ESP_OK;
+}
+
+/**
  * Main application entry point.
+ *
+ * Ethernet starts even if the bridge cannot, so the board stays
+ * reachable for diagnosis. Only the TCP server depends on the bridge.
  */
 void app_main(void)
 {
+    const bool bridge_ready = (start_bridge() == ESP_OK);
+
     esp_err_t err = network_init();
 
     if (err != ESP_OK) {
@@ -220,7 +262,7 @@ void app_main(void)
             "Network initialization failed: %s",
             esp_err_to_name(err)
         );
-    } else {
+    } else if (bridge_ready) {
         err = network_start_server();
 
         if (err != ESP_OK) {
@@ -231,8 +273,4 @@ void app_main(void)
             );
         }
     }
-
-#if CONFIG_BRIDGE_UART_LOOPBACK_TEST
-    run_uart_diagnostics();
-#endif
 }
