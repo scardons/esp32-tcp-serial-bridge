@@ -34,9 +34,17 @@ int uart_driver_write(const uint8_t*d,size_t n){ pthread_mutex_lock(&um); int64_
     if(ring_before+(long)n+12>RING)m_spin++; /* driver would spin here */
     m_done=(m_done>now?m_done:now)+(int64_t)(n*BAUD_US+0.5); double nb=(double)(m_done-now); if(nb>m_max_backlog_us)m_max_backlog_us=nb; if(ring_before+(long)n>m_max_ring)m_max_ring=ring_before+n; due=m_done; }
   for(size_t i=0;i<n;i++){ if(txlen<CAP)txlog[txlen++]=d[i]; if(echo_on){ub[ut%CAP]=d[i];ud[ut%CAP]=due;ut++;}} uart_tx_total+=n; pthread_mutex_unlock(&um); return (int)n;}
-int uart_driver_read(uint8_t*b,size_t cap,uint32_t ms){ size_t n=0; pthread_mutex_lock(&um); int64_t now=esp_timer_get_time();
-  while(n<cap&&uh<ut&&ud[uh%CAP]<=now){b[n++]=ub[uh%CAP];uh++;} pthread_mutex_unlock(&um); if(!n&&ms)usleep(ms*1000); return (int)n;}
-static void uart_inject(const uint8_t*d,size_t n){pthread_mutex_lock(&um);int64_t now=esp_timer_get_time();for(size_t i=0;i<n;i++){ub[ut%CAP]=d[i];ud[ut%CAP]=now;ut++;}pthread_mutex_unlock(&um);}
+/* Like the driver, a timed read returns once data arrives, or at the timeout. */
+int uart_driver_read(uint8_t*b,size_t cap,uint32_t ms){ size_t n=0; int64_t end=esp_timer_get_time()+ms*1000LL;
+  for(;;){ pthread_mutex_lock(&um); int64_t now=esp_timer_get_time();
+    while(n<cap&&uh<ut&&ud[uh%CAP]<=now){b[n++]=ub[uh%CAP];uh++;} pthread_mutex_unlock(&um);
+    if(n||!ms||esp_timer_get_time()>=end)break; usleep(1000);} return (int)n;}
+static void uart_inject_at(const uint8_t*d,size_t n,int64_t due){pthread_mutex_lock(&um);for(size_t i=0;i<n;i++){ub[ut%CAP]=d[i];ud[ut%CAP]=due;ut++;}pthread_mutex_unlock(&um);}
+static void uart_inject(const uint8_t*d,size_t n){uart_inject_at(d,n,esp_timer_get_time());}
+/* Bytes still in the hardware FIFO when the bridge asks: they reach the ring buffer 1 ms later. */
+static atomic_int fifo_at_end=0; static atomic_int fifo_calls=0;
+size_t uart_driver_rx_fifo_len(void){ fifo_calls++; int k=atomic_exchange(&fifo_at_end,0);
+  if(k>0){uint8_t f[128];memset(f,0xF1,sizeof f);uart_inject_at(f,(size_t)k,esp_timer_get_time()+1000);} return (size_t)(k>0?k:0);}
 /* ---- socket wrappers */
 atomic_int send_mode=0; atomic_long send_calls=0, send_eagain=0, send_partial=0; atomic_int closes=0; atomic_int last_closed=-1; atomic_int dbl=0;
 static atomic_int open_fd=-1;
@@ -57,6 +65,8 @@ static esp_err_t attach(int fd){ esp_err_t e=bridge_attach_client(fd); if(e==ESP
 static void wait_closed(int want,int ms){while(ms-->0&&closes<want)usleep(1000);}
 static void wait_free(void){usleep(30000);}
 static size_t rd_all(int fd,uint8_t*b,size_t want,int ms){size_t g=0;struct timeval tv={0,50000};setsockopt(fd,SOL_SOCKET,SO_RCVTIMEO,&tv,sizeof tv);int64_t end=esp_timer_get_time()+ms*1000LL;while(g<want&&esp_timer_get_time()<end){ssize_t r=recv(fd,b+g,want-g,0);if(r>0)g+=r;else if(r==0)break;}return g;}
+/* Reads until the stream ends: 0 for EOF (a FIN), the errno for a reset or error, -1 if it does not end in time. */
+static int stream_end(int fd,int ms){uint8_t d[4096];struct timeval tv={0,50000};setsockopt(fd,SOL_SOCKET,SO_RCVTIMEO,&tv,sizeof tv);int64_t end=esp_timer_get_time()+ms*1000LL;while(esp_timer_get_time()<end){ssize_t r=recv(fd,d,sizeof d,0);if(r==0)return 0;if(r<0&&errno!=EAGAIN&&errno!=EWOULDBLOCK&&errno!=EINTR)return errno;}return -1;}
 struct wr{int fd;const uint8_t*b;size_t n;};
 static void*wth(void*p){struct wr*w=p;size_t o=0;while(o<w->n){size_t c=w->n-o;if(c>4096)c=4096;ssize_t s=write(w->fd,w->b+o,c);if(s<=0)break;o+=s;}return 0;}
 static void *pat(size_t n){uint8_t*b=malloc(n);for(size_t i=0;i<n;i++)b[i]=(uint8_t)((i*7)^(i>>8));return b;}
@@ -88,12 +98,14 @@ int main(void){ ub=malloc(CAP);ud=malloc(CAP*sizeof(int64_t));txlog=malloc(CAP);
     int c2,s2;conn(&c2,&s2,0);attach(s2);uint8_t r2[64];g=rd_all(c2,r2,sizeof r2,700);CHECK(g==0,"bytes echoed after session end not delivered to next client (%zu)",g);
     uint8_t nw[32];memset(nw,0x5A,sizeof nw);uart_inject(nw,sizeof nw);g=rd_all(c2,r2,32,1000);CHECK(g==32&&r2[0]==0x5A,"new session still receives fresh data (%zu)",g);echo_delay_us=0;b=closes;close(c2);wait_closed(b+1,2000);wait_free();}
   printf("T7 disconnect request\n");
-  { int c,s;conn(&c,&s,0);int b=closes;bridge_request_disconnect();wait_free();CHECK(attach(s)==ESP_OK,"request before attach ignored by new client");usleep(100000);CHECK(closes==b,"new client stays connected");bridge_request_disconnect();bridge_request_disconnect();wait_closed(b+1,2000);CHECK(closes==b+1,"session closed once");wait_free();close(c);conn(&c,&s,0);CHECK(attach(s)==ESP_OK,"accepting again");b=closes;close(c);wait_closed(b+1,2000);wait_free();CHECK(dbl==0,"no double close");}
+  { int c,s;conn(&c,&s,0);int b=closes;bridge_request_disconnect();wait_free();CHECK(attach(s)==ESP_OK,"request before attach ignored by new client");usleep(100000);CHECK(closes==b,"new client stays connected");bridge_request_disconnect();bridge_request_disconnect();wait_closed(b+1,2000);CHECK(closes==b+1,"session closed once");wait_free();int e=stream_end(c,2000);CHECK(e==0,"requested disconnect ends with a FIN, not a reset (%s)",e==0?"EOF":e<0?"no end":strerror(e));close(c);conn(&c,&s,0);CHECK(attach(s)==ESP_OK,"accepting again");b=closes;close(c);wait_closed(b+1,2000);wait_free();CHECK(dbl==0,"no double close");}
+  printf("T7b healthy peer close\n");
+  { echo_on=1;int c,s;conn(&c,&s,0);int b=closes;attach(s);usleep(250000);uint8_t m[32];memset(m,0x33,sizeof m);send(c,m,sizeof m,0);uint8_t r[32];CHECK(rd_all(c,r,sizeof r,1000)==sizeof r,"echo before close");shutdown(c,SHUT_WR);wait_closed(b+1,2000);CHECK(closes==b+1,"client FIN ends the session");int e=stream_end(c,2000);CHECK(e==0,"server answers with a FIN, not a reset (%s)",e==0?"EOF":e<0?"no end":strerror(e));close(c);wait_free();CHECK(dbl==0,"no double close");}
   printf("T8 stall: send never progresses, EAGAIN must not end session early\n");
   { echo_on=0;int c,s;conn(&c,&s,0);int b=closes;send_mode=3;attach(s);usleep(250000);uint8_t x[64]={1};uart_inject(x,sizeof x);long c0=send_calls;int64_t t0=esp_timer_get_time();
     usleep(4000000);CHECK(closes==b,"still connected after 4 s of EAGAIN");wait_closed(b+1,3000);double el=(esp_timer_get_time()-t0)/1e6;long calls=send_calls-c0;CHECK(closes==b+1&&el>4.9&&el<5.3,"closed at %.2f s",el);CHECK(calls>100&&calls<=520,"%ld send attempts in stall, about 100/s, not a busy loop",calls);send_mode=0;close(c);wait_free();}
   printf("T9 real stalled client (not reading), full socket buffers\n");
-  { echo_on=0;int c,s;conn(&c,&s,4096);int sb=4096;setsockopt(s,SOL_SOCKET,SO_SNDBUF,&sb,sizeof sb);int b=closes;attach(s);usleep(250000);static uint8_t big[1024*1024];int64_t t0=0;uart_inject(big,sizeof big);t0=esp_timer_get_time();wait_closed(b+1,15000);CHECK(closes==b+1,"client that never reads is disconnected after %.2f s",(esp_timer_get_time()-t0)/1e6);close(c);wait_free();uint8_t d[4096];while(uart_driver_read(d,sizeof d,0)>0){}}
+  { echo_on=0;int c,s;conn(&c,&s,4096);int sb=4096;setsockopt(s,SOL_SOCKET,SO_SNDBUF,&sb,sizeof sb);int b=closes;attach(s);usleep(250000);static uint8_t big[1024*1024];int64_t t0=0;uart_inject(big,sizeof big);t0=esp_timer_get_time();wait_closed(b+1,15000);CHECK(closes==b+1,"client that never reads is disconnected after %.2f s",(esp_timer_get_time()-t0)/1e6);int e=stream_end(c,5000);CHECK(e==ECONNRESET,"stalled client sees ECONNRESET, not a FIN (%s)",e==0?"EOF":e<0?"no end":strerror(e));close(c);wait_free();uint8_t d[4096];while(uart_driver_read(d,sizeof d,0)>0){}}
   printf("T10 progress resets the timer\n");
   { echo_on=0;int c,s;conn(&c,&s,4096);int sb=4096;setsockopt(s,SOL_SOCKET,SO_SNDBUF,&sb,sizeof sb);int b=closes;attach(s);usleep(250000);static uint8_t big2[1024*1024];uart_inject(big2,sizeof big2);uint8_t d[8192];int64_t t0=esp_timer_get_time();
     while(esp_timer_get_time()-t0<11000000){usleep(3000000);recv(c,d,sizeof d,MSG_DONTWAIT);}CHECK(closes==b,"slow reader survives 11 s, reading every 3 s");close(c);wait_closed(b+1,8000);CHECK(closes==b+1,"then closes");wait_free();}
@@ -149,4 +161,30 @@ int main(void){ ub=malloc(CAP);ud=malloc(CAP*sizeof(int64_t));txlog=malloc(CAP);
       CHECK(d.values[LOSS_TCP_TX_BYTES]==64&&d.values[LOSS_TCP_SEND_FAILURE]==0,"disconnect request: 64 bytes lost, no send failure (%u)",d.values[LOSS_TCP_TX_BYTES]); }
     { echo_on=0;slow=1;m_done=0;usleep(250000);size_t n=20000;uint8_t*tx=pat(n);int c1,s1;conn(&c1,&s1,0);int b=closes;txlen=0;attach(s1);pthread_t w;struct wr wa={c1,tx,n};pthread_create(&w,0,wth,&wa);usleep(600000);SNAP();bridge_request_disconnect();wait_closed(b+1,1000);DELTA();close(c1);pthread_join(w,0);wait_free();free(tx);slow=0;
       printf("       TCP to UART bytes left unwritten at close: %u\n",d.values[LOSS_UART_TX_BYTES]);CHECK(d.values[LOSS_UART_TX_BYTES]<=256,"unwritten TCP bytes bounded by the 256-byte pending buffer");CHECK(dbl==0,"no double close"); } }
+  printf("T17 M3: bytes UART1 held when a session ended are counted once, with that session\n");
+  { static loss_snapshot_t p,c,d; echo_on=0; slow=0; uint8_t x[1000]; memset(x,7,sizeof x);
+    const char*names[]={"H6 stalled client","Ethernet link loss (disconnect request)","abnormal disconnect (RST)","normal disconnect (FIN)"};
+    for(int k=0;k<4;k++){ int c1,s1;conn(&c1,&s1,0);int b=closes;attach(s1);usleep(250000);loss_stats_snapshot(&p);int f0=fifo_calls;
+      send_mode=3; uart_inject(x,sizeof x); usleep(100000); fifo_at_end=40;
+      if(k==1)bridge_request_disconnect();
+      if(k==2){struct linger l={1,0};setsockopt(c1,SOL_SOCKET,SO_LINGER,&l,sizeof l);close(c1);}
+      if(k==3)close(c1);
+      wait_closed(b+1,k==0?7000:2000); send_mode=0; wait_free(); usleep(300000);
+      loss_stats_snapshot(&c);loss_stats_delta(&p,&c,&d); if(k<2)close(c1);
+      uint32_t tx=d.values[LOSS_TCP_TX_BYTES],ses=d.values[DISCARD_SESSION_BYTES],nc=d.values[DISCARD_NO_CLIENT_BYTES];
+      printf("       %s: tcp_tx_bytes=%u session_bytes=%u no_client_bytes=%u tcp_send_failures=%u\n",names[k],tx,ses,nc,d.values[LOSS_TCP_SEND_FAILURE]);
+      CHECK(closes==b+1&&fifo_calls>f0,"%s: session ended and the FIFO was checked",names[k]);
+      CHECK(tx+ses+nc==1040,"%s: 1000 ring and pending bytes plus 40 FIFO bytes, each counted once (%u)",names[k],tx+ses+nc);
+      CHECK(nc==0,"%s: none counted as no-client data",names[k]);
+      if(k<3) CHECK(tx==1040&&ses==0&&loss_stats_has_loss(&d),"%s: all 1040 counted as data loss",names[k]);
+      else CHECK(ses==1040&&tx==0&&!loss_stats_has_loss(&d),"%s: all 1040 counted as expected session discard",names[k]);
+      if(k==0) CHECK(d.values[LOSS_TCP_SEND_FAILURE]==1,"%s: one send failure",names[k]);
+      if(k==1) CHECK(d.values[LOSS_TCP_SEND_FAILURE]==0,"%s: no send failure",names[k]); }
+    loss_stats_snapshot(&p); uart_inject(x,300); usleep(300000); loss_stats_snapshot(&c);loss_stats_delta(&p,&c,&d);
+    CHECK(d.values[DISCARD_NO_CLIENT_BYTES]==300&&!loss_stats_has_loss(&d)&&d.values[DISCARD_SESSION_BYTES]==0,"afterwards, data with no client is still an expected discard (%u)",d.values[DISCARD_NO_CLIENT_BYTES]);
+    { uint8_t big[4000]; memset(big,9,sizeof big); int c1,s1;conn(&c1,&s1,0);int b=closes;attach(s1);usleep(250000);loss_stats_snapshot(&p);
+      send_mode=3; uart_inject(big,sizeof big); usleep(100000); bridge_request_disconnect(); wait_closed(b+1,2000); send_mode=0; wait_free(); usleep(300000);
+      loss_stats_snapshot(&c);loss_stats_delta(&p,&c,&d); close(c1);
+      CHECK(d.values[LOSS_TCP_TX_BYTES]>=2048&&d.values[LOSS_TCP_TX_BYTES]<=256+2304,"drain stops at what UART1 can hold (%u bytes counted as loss)",d.values[LOSS_TCP_TX_BYTES]);
+      CHECK(d.values[LOSS_TCP_TX_BYTES]+d.values[DISCARD_NO_CLIENT_BYTES]==4000,"bytes beyond it go to no-client data, none counted twice (%u)",d.values[LOSS_TCP_TX_BYTES]+d.values[DISCARD_NO_CLIENT_BYTES]); } }
   printf("\nRESULT pass=%d fail=%d send_calls=%ld\n",pass,fail,(long)send_calls);return fail?1:0;}

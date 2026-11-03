@@ -19,6 +19,15 @@
 #include "lwip/sockets.h"
 #include "uart_driver.h"
 
+#ifdef ESP_PLATFORM
+#include "sdkconfig.h"
+
+// A stalled client is aborted through SO_LINGER, which lwIP ignores without it.
+#if !CONFIG_LWIP_SO_LINGER
+#error "CONFIG_LWIP_SO_LINGER must be enabled: a stalled client is aborted with SO_LINGER"
+#endif
+#endif
+
 #define BRIDGE_TASK_STACK     4096
 #define BRIDGE_TASK_PRIORITY  5
 #define BRIDGE_POLL_PERIOD_US 10000
@@ -38,6 +47,11 @@
 
 // Read timeout that blocks the task for at least one tick.
 #define BRIDGE_UART_DRAIN_READ_MS  20
+
+// Most bytes UART1 can hold at once: the ring buffer, the up to one FIFO of
+// bytes the driver keeps aside when the ring buffer is full, and the FIFO.
+#define BRIDGE_UART_RX_HELD_MAX \
+    (UART_DRIVER_RX_BUFFER_SIZE + 2 * UART_DRIVER_RX_FIFO_SIZE)
 
 // uart_driver_write() spins instead of sleeping when the TX ring buffer is full.
 // Estimating the bytes still queued keeps it well below capacity, so it never
@@ -60,6 +74,9 @@ static const char *TAG = "BRIDGE";
 
 // The only reason that ends a session without a failure.
 static const char REASON_PEER_CLOSED[] = "disconnected by peer";
+
+// The only reason that ends a session with a reset instead of a FIN.
+static const char REASON_CLIENT_STALLED[] = "client stalled";
 
 static QueueHandle_t s_client_queue = NULL;
 static atomic_bool s_session_busy = false;
@@ -194,7 +211,7 @@ static const char *send_to_client(int fd, pending_tx_t *pending)
     if (esp_timer_get_time() - pending->last_progress_us >=
         BRIDGE_TX_STALL_TIMEOUT_US) {
         loss_stats_add(LOSS_TCP_SEND_FAILURE, 1);
-        return "client stalled";
+        return REASON_CLIENT_STALLED;
     }
 
     return NULL;
@@ -290,12 +307,56 @@ static void discard_uart_input(void)
     }
 }
 
+/*
+ * Reads and drops what UART1 had already received when the session ended, and
+ * returns the byte count. Those bytes were meant for that session's client, so
+ * they are counted with it, not as data with no client. Each byte is read, and
+ * so counted, once.
+ *
+ * Bytes arriving while this runs, a few microseconds, are counted too. The
+ * limit stops a continuous stream from keeping it busy.
+ */
+static uint32_t drain_session_input(void)
+{
+    uint32_t total = 0;
+
+    // The ring buffer, and the bytes the driver kept aside while it was full,
+    // which it adds to the ring buffer as soon as a read makes room.
+    while (total < BRIDGE_UART_RX_HELD_MAX) {
+        const int length = uart_driver_read(s_uart_rx_buffer, sizeof(s_uart_rx_buffer), 0);
+
+        if (length <= 0) {
+            break;
+        }
+
+        total += (uint32_t)length;
+    }
+
+    // Bytes still in the hardware FIFO reach the ring buffer on the RX
+    // timeout, after 10 idle symbol times: under 1 ms at 115200 baud.
+    const size_t in_fifo = uart_driver_rx_fifo_len();
+
+    if (in_fifo > 0) {
+        const size_t wanted = in_fifo < sizeof(s_uart_rx_buffer) ? in_fifo
+                                                                 : sizeof(s_uart_rx_buffer);
+        const int length = uart_driver_read(s_uart_rx_buffer, wanted,
+                                            BRIDGE_UART_DRAIN_READ_MS);
+
+        if (length > 0) {
+            total += (uint32_t)length;
+        }
+    }
+
+    return total;
+}
+
 // A client that closes normally is expected to leave bytes behind. In any
 // other case those bytes were meant for an endpoint that did not get them.
 static void record_session_end(const char *reason, const pending_tx_t *pending_tx,
                                const pending_uart_t *pending_uart)
 {
-    const uint32_t tx_bytes = (uint32_t)(pending_tx->length - pending_tx->offset);
+    const uint32_t tx_bytes = (uint32_t)(pending_tx->length - pending_tx->offset) +
+                              drain_session_input();
     const uint32_t uart_bytes = (uint32_t)(pending_uart->length - pending_uart->offset);
 
     if (reason == REASON_PEER_CLOSED) {
@@ -303,6 +364,21 @@ static void record_session_end(const char *reason, const pending_tx_t *pending_t
     } else {
         loss_stats_add(LOSS_TCP_TX_BYTES, tx_bytes);
         loss_stats_add(LOSS_UART_TX_BYTES, uart_bytes);
+    }
+}
+
+/*
+ * A stalled client keeps its receive window at zero, so a FIN queued behind
+ * unsent data never leaves, and lwIP keeps the connection for as long as the
+ * client acknowledges its window probes. With linger 0, close() aborts it:
+ * lwIP sends a RST and frees the connection and its buffers at once.
+ */
+static void abort_on_close(int fd)
+{
+    const struct linger abort_linger = {.l_onoff = 1, .l_linger = 0};
+
+    if (setsockopt(fd, SOL_SOCKET, SO_LINGER, &abort_linger, sizeof(abort_linger)) != 0) {
+        ESP_LOGW(TAG, "Cannot abort the stalled client: SO_LINGER failed, errno %d", errno);
     }
 }
 
@@ -329,6 +405,11 @@ static void bridge_task(void *arg)
         record_session_end(reason, &pending_tx, &pending_uart);
 
         ESP_LOGI(TAG, "TCP client closed: %s", reason);
+
+        if (reason == REASON_CLIENT_STALLED) {
+            abort_on_close(fd);
+        }
+
         close(fd);
 
         // Last step: a new client can only arrive after this socket is closed.

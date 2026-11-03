@@ -7,6 +7,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#include "esp_app_desc.h"
 #include "esp_err.h"
 #include "esp_log.h"
 #include "esp_timer.h"
@@ -245,6 +246,27 @@ static esp_err_t start_bridge(void)
 }
 
 /**
+ * Logs one line that identifies the firmware, for test records. The ELF
+ * SHA256 is the exact identity: the version comes from `git describe`, and
+ * the same version can name different builds of uncommitted changes.
+ */
+static void log_firmware_identity(void)
+{
+    const esp_app_desc_t *app = esp_app_get_description();
+    char elf_sha256[65] = "";
+
+    esp_app_get_elf_sha256(elf_sha256, sizeof(elf_sha256));
+
+    ESP_LOGI(TAG, "Firmware: version %s, ELF SHA256 %s, built %s %s, ESP-IDF %s",
+             app->version, elf_sha256, app->date, app->time, app->idf_ver);
+
+    if (strstr(app->version, "dirty") != NULL) {
+        ESP_LOGW(TAG, "Built from uncommitted changes: identify this firmware "
+                      "by its ELF SHA256, not its version");
+    }
+}
+
+/**
  * Main application entry point.
  *
  * Ethernet starts even if the bridge cannot, so the board stays
@@ -252,6 +274,8 @@ static esp_err_t start_bridge(void)
  */
 void app_main(void)
 {
+    log_firmware_identity();
+
     const bool bridge_ready = (start_bridge() == ESP_OK);
 
     esp_err_t err = network_init();

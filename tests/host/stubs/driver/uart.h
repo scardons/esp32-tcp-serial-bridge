@@ -1,6 +1,7 @@
 #pragma once
 /* Just enough of the ESP-IDF UART driver to build the real uart_driver.c. */
 #include <stddef.h>
+#include <stdint.h>
 #include "esp_err.h"
 #include "freertos/FreeRTOS.h"
 typedef int uart_port_t;
@@ -15,3 +16,5 @@ esp_err_t uart_param_config(uart_port_t port, const uart_config_t *config);
 esp_err_t uart_set_pin(uart_port_t port, int tx, int rx, int rts, int cts);
 int uart_write_bytes(uart_port_t port, const void *data, size_t length);
 int uart_read_bytes(uart_port_t port, void *data, size_t length, TickType_t ticks);
+esp_err_t uart_enable_intr_mask(uart_port_t port, uint32_t mask);
+esp_err_t uart_disable_intr_mask(uart_port_t port, uint32_t mask);

@@ -27,6 +27,13 @@ typedef enum {
     // Pressure indicator: no bytes are lost by this event alone.
     PRESSURE_RX_BUFFER_FULL, // UART RX ring buffer full events
 
+    // Line condition: a break is a signal, not lost data.
+    LINE_UART_BREAK,         // UART break events
+
+    // Accounting health. Neither one means that data was lost.
+    ACCOUNT_EVENT_QUEUE_DROPS, // UART events the driver could not queue, all types
+    ACCOUNT_RX_ERROR_PAUSES,   // Times frame-error and break interrupts were paused
+
     LOSS_COUNTER_COUNT,
 } loss_counter_t;
 
@@ -37,6 +44,8 @@ typedef struct {
 void loss_stats_add(loss_counter_t counter, uint32_t amount);
 
 void loss_stats_snapshot(loss_snapshot_t *snapshot);
+
+uint32_t loss_stats_get(loss_counter_t counter);
 
 /**
  * Computes current - previous. Counters that wrapped around still
@@ -51,6 +60,13 @@ void loss_stats_delta(const loss_snapshot_t *previous,
  * Expected discards and pressure events do not count.
  */
 bool loss_stats_has_loss(const loss_snapshot_t *snapshot);
+
+/**
+ * Returns true if the report deserves a warning: data loss, or a sign
+ * that the accounting was under strain. Queue drops are still counted,
+ * so they do not make the loss counters wrong.
+ */
+bool loss_stats_needs_attention(const loss_snapshot_t *snapshot);
 
 /**
  * Writes the one-line report. Returns the length of the text,

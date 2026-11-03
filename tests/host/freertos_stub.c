@@ -1,6 +1,7 @@
 /* POSIX stand-ins for the few FreeRTOS calls used by the tested firmware files. */
 #include <errno.h>
 #include <pthread.h>
+#include <stdatomic.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -14,6 +15,15 @@
 void vTaskDelay(unsigned ticks)
 {
     usleep(ticks * TICK_MS * 1000);
+}
+
+/* Bytes of stack never used, as ESP-IDF reports it. Tests may change it. */
+_Atomic UBaseType_t test_stack_high_water = 1800;
+
+UBaseType_t uxTaskGetStackHighWaterMark(void *task)
+{
+    (void)task;
+    return atomic_load(&test_stack_high_water);
 }
 
 struct start { void (*task)(void *); void *arg; };

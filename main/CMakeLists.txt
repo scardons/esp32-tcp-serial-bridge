@@ -25,10 +25,18 @@ idf_component_register(
         "bridge"
 
     PRIV_REQUIRES
+        esp_app_format
         esp_netif
         esp_eth
         esp_event
         esp_driver_uart
+        esp_hal_uart
         esp_timer
         lwip
 )
+
+# FR-7: the UART driver drops events without notice when its event queue is
+# full. Wrapping the ISR queue send lets uart_driver.c count those drops.
+# Without this option the build fails, because __real_xQueueGenericSendFromISR
+# is then undefined.
+target_link_libraries(${COMPONENT_LIB} INTERFACE "-Wl,--wrap=xQueueGenericSendFromISR")

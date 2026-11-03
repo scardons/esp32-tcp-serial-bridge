@@ -23,6 +23,15 @@ void loss_stats_snapshot(loss_snapshot_t *snapshot)
     }
 }
 
+uint32_t loss_stats_get(loss_counter_t counter)
+{
+    if (counter >= LOSS_COUNTER_COUNT) {
+        return 0;
+    }
+
+    return atomic_load_explicit(&s_counters[counter], memory_order_relaxed);
+}
+
 void loss_stats_delta(const loss_snapshot_t *previous,
                       const loss_snapshot_t *current,
                       loss_snapshot_t *delta)
@@ -41,6 +50,13 @@ bool loss_stats_has_loss(const loss_snapshot_t *snapshot)
            snapshot->values[LOSS_UART_TX_BYTES] != 0;
 }
 
+bool loss_stats_needs_attention(const loss_snapshot_t *snapshot)
+{
+    return loss_stats_has_loss(snapshot) ||
+           snapshot->values[ACCOUNT_EVENT_QUEUE_DROPS] != 0 ||
+           snapshot->values[ACCOUNT_RX_ERROR_PAUSES] != 0;
+}
+
 int loss_stats_format(const loss_snapshot_t *delta, uint32_t interval_ms,
                       char *buffer, size_t size)
 {
@@ -53,7 +69,9 @@ int loss_stats_format(const loss_snapshot_t *delta, uint32_t interval_ms,
         " uart_rx_errors=%" PRIu32 " tcp_send_failures=%" PRIu32
         " tcp_tx_bytes=%" PRIu32 " uart_tx_bytes=%" PRIu32
         " | expected: session_bytes=%" PRIu32 " no_client_bytes=%" PRIu32
-        " | rx_buffer_full=%" PRIu32,
+        " | pressure: rx_buffer_full=%" PRIu32
+        " | line: uart_breaks=%" PRIu32
+        " | accounting: event_queue_drops=%" PRIu32 " rx_error_pauses=%" PRIu32,
         tenths / 10, tenths % 10,
         loss_stats_has_loss(delta) ? "DATA LOSS" : "no data loss",
         delta->values[LOSS_UART_RX_OVERFLOW],
@@ -63,5 +81,8 @@ int loss_stats_format(const loss_snapshot_t *delta, uint32_t interval_ms,
         delta->values[LOSS_UART_TX_BYTES],
         delta->values[DISCARD_SESSION_BYTES],
         delta->values[DISCARD_NO_CLIENT_BYTES],
-        delta->values[PRESSURE_RX_BUFFER_FULL]);
+        delta->values[PRESSURE_RX_BUFFER_FULL],
+        delta->values[LINE_UART_BREAK],
+        delta->values[ACCOUNT_EVENT_QUEUE_DROPS],
+        delta->values[ACCOUNT_RX_ERROR_PAUSES]);
 }

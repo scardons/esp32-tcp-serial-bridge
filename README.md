@@ -28,18 +28,18 @@ TCP client  <---- port 4001 ---->  ESP32  <---- TX GPIO32 / RX GPIO33 ---->  Ser
 | FR-4 | UART1 RX data goes to the active client | Partial | H2 to H6 | [FR-4](docs/test-records/hw-validation-fr4.md) |
 | FR-5 | Text not available in this repository | Pending | Not defined | [FR-5](docs/test-records/hw-validation-fr5.md) |
 | FR-6 | Text not available in this repository | Pending | Not defined | [FR-6](docs/test-records/hw-validation-fr6.md) |
-| FR-7 | Report detected data loss every 10 s on UART0 | **Pending** | Host tests, HW-FR7-001 to 006 | [FR-7](docs/test-records/hw-validation-fr7.md) |
+| FR-7 | Report detected data loss every 10 s on UART0 | **Pending** | Host tests, HW-FR7-001 to 011 | [FR-7](docs/test-records/hw-validation-fr7.md) |
 | FR-8 | Half-open connections and Ethernet disconnection (from project notes) | Partial | H6, H7, H8 | [FR-8](docs/test-records/hw-validation-fr8.md) |
 
 The status comes from the records in [`docs/test-records/`](docs/test-records/). The FR-3 and FR-4 records don't yet cite the automated run below.
 
-**Latest automated run:** H1 to H5 passed on firmware `23f991546`, and H4 measured 11,517 bytes/s with matching SHA256 hashes. See [the report](docs/test-reports/automated-test-results.md). H6 also passed, but [its report](docs/test-reports/automated-test-results-h6.md) doesn't identify the firmware. That build predates FR-7, so these results don't cover the current code.
+**Latest automated run:** H1 to H5 passed on firmware `23f991546`, and H4 measured 11,517 bytes/s with matching SHA256 hashes. See [the report](docs/test-reports/automated-test-results.md). H6 also passed, but [its report](docs/test-reports/automated-test-results-h6.md) doesn't identify the firmware. That build predates FR-7, so these results don't cover the current code. Firmware `f10f8b076` (FR-7 before the audit corrections) has no hardware results.
 
 ### Known Issues
 
-- **Frame errors aren't detected.** The UART driver's default interrupts don't include them, so `uart_rx_errors` stays at 0 and HW-FR7-006 will fail.
-- **`LOSS:` lines report detected loss only.** "No data loss" can appear after an abnormal session, because data held in lwIP buffers isn't visible to the firmware.
-- **H5 can end either way.** The close races with the echo, so the report may or may not show loss. Only the isolation result matters for H5.
+- **`LOSS:` lines report detected loss only.** "No data loss" can appear after an abnormal session, because data held in lwIP buffers isn't visible to the firmware. Data still held by UART1 is counted.
+- **H5 can end either way.** The close races with the echo, so the report may or may not show loss, and `tcp_send_failures` may be 0 or 1. Only the isolation result matters for H5.
+- **Frame-error storms are capped.** Above 2,000 frame errors and breaks in one interval, their interrupts pause until the next report, and `rx_error_pauses` shows it. The counts for that interval are a lower bound.
 
 ## Hardware
 
@@ -87,7 +87,7 @@ npm install
 
 For tests on the board:
 
-1. Flash the firmware and note the `ELF file SHA256` from the boot log.
+1. Flash the firmware and note the ELF SHA256 from the `MAIN: Firmware:` boot line. A build from uncommitted changes also logs a warning, because its version doesn't identify it.
 2. Connect the GPIO32 to GPIO33 jumper. Without it, every echo test fails.
 3. Keep `idf.py -p /dev/ttyUSB1 monitor` open and save its log. Close reasons and `LOSS:` lines appear only there.
 4. Close any other client, because the bridge accepts only one.
