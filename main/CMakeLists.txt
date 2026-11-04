@@ -13,6 +13,7 @@ idf_component_register(
     SRCS
         "main.c"
         "network/network.c"
+        "network/client_socket.c"
         "uart/uart_driver.c"
         "bridge/bridge.c"
         "bridge/loss_reporter.c"

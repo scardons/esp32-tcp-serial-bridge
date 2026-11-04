@@ -2,6 +2,7 @@
 #include "network.h"
 
 #include "bridge.h"
+#include "client_socket.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -31,11 +32,6 @@
 #define TCP_LISTEN_QUEUE         1
 #define TCP_SELECT_TIMEOUT_S     1
 #define TCP_RETRY_DELAY_MS       1000
-
-// A peer that vanishes without closing is dropped after about 12 seconds.
-#define TCP_KEEPALIVE_IDLE_S     5
-#define TCP_KEEPALIVE_INTERVAL_S 2
-#define TCP_KEEPALIVE_PROBES     3
 
 static const char *TAG = "NETWORK";
 
@@ -312,15 +308,6 @@ static int open_listener(void)
     return fd;
 }
 
-static void configure_client_socket(int fd)
-{
-    set_socket_option(fd, IPPROTO_TCP, TCP_NODELAY, 1);
-    set_socket_option(fd, SOL_SOCKET, SO_KEEPALIVE, 1);
-    set_socket_option(fd, IPPROTO_TCP, TCP_KEEPIDLE, TCP_KEEPALIVE_IDLE_S);
-    set_socket_option(fd, IPPROTO_TCP, TCP_KEEPINTVL, TCP_KEEPALIVE_INTERVAL_S);
-    set_socket_option(fd, IPPROTO_TCP, TCP_KEEPCNT, TCP_KEEPALIVE_PROBES);
-}
-
 static void accept_client(int *listen_fd)
 {
     struct sockaddr_in peer = {0};
@@ -344,7 +331,13 @@ static void accept_client(int *listen_fd)
     char peer_ip[INET_ADDRSTRLEN] = "";
     inet_ntop(AF_INET, &peer.sin_addr, peer_ip, sizeof(peer_ip));
 
-    configure_client_socket(fd);
+    // Without its keepalive, a half-open client would hold the slot for hours.
+    if (client_socket_configure(fd) != ESP_OK) {
+        ESP_LOGE(TAG, "TCP client %s:%u rejected: keepalive could not be configured",
+                 peer_ip, ntohs(peer.sin_port));
+        close(fd);
+        return;
+    }
 
     // After a successful attach the socket belongs to the bridge.
     const esp_err_t err = bridge_attach_client(fd);

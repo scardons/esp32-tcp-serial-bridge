@@ -59,4 +59,11 @@ gcc -c $FLAGS $WARN $INCLUDES $HOST/freertos_stub.c -o "$OUT/freertos_stub.o" ||
 gcc $FLAGS "$OUT/bridge.o" "$OUT/loss_stats.o" "$OUT/bridge_test.o" "$OUT/freertos_stub.o" -lpthread -o "$OUT/bridge_test"
 run "Bridge logic" "$OUT/bridge_test"
 
+# The socket option wrappers apply to client_socket.c only.
+gcc -c $FLAGS $WARN -Dsetsockopt=test_setsockopt -Dgetsockopt=test_getsockopt $INCLUDES -Imain/network \
+    main/network/client_socket.c -o "$OUT/client_socket.o" || exit 2
+gcc -c $FLAGS $WARN $INCLUDES -Imain/network $HOST/client_socket_test.c -o "$OUT/client_socket_test.o" || exit 2
+gcc $FLAGS "$OUT/client_socket.o" "$OUT/client_socket_test.o" -o "$OUT/client_socket_test" || exit 2
+run "FR-8 client socket keepalive" "$OUT/client_socket_test"
+
 exit $status

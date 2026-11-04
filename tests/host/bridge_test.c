@@ -18,8 +18,13 @@
 #include "freertos/task.h"
 #include <stdarg.h>
 #include "loss_stats.h"
+#include "esp_system.h"
 atomic_long delay_calls=0;
-void test_log(char level,const char*tag,const char*format,...){va_list a;va_start(a,format);fprintf(stderr,"%c %s: ",level,tag);vfprintf(stderr,format,a);fprintf(stderr,"\n");va_end(a);}
+/* ---- FR-8 heap report at session end: values are fixed, only the calls are counted. */
+static atomic_int heap_free_calls=0, heap_min_calls=0, heap_logs=0;
+uint32_t esp_get_free_heap_size(void){heap_free_calls++;return 200000;}
+uint32_t esp_get_minimum_free_heap_size(void){heap_min_calls++;return 150000;}
+void test_log(char level,const char*tag,const char*format,...){if(!strncmp(format,"Heap after session",18))heap_logs++;va_list a;va_start(a,format);fprintf(stderr,"%c %s: ",level,tag);vfprintf(stderr,format,a);fprintf(stderr,"\n");va_end(a);}
 /* ---- mock UART: TX bytes return on RX after a delay (jumper) */
 #define CAP (8*1024*1024)
 static uint8_t *ub; static int64_t *ud; static size_t uh,ut; static pthread_mutex_t um=PTHREAD_MUTEX_INITIALIZER;
@@ -91,6 +96,9 @@ int main(void){ ub=malloc(CAP);ud=malloc(CAP*sizeof(int64_t));txlog=malloc(CAP);
     close(c1);wait_closed(b+1,2000);wait_free();conn(&c2,&s2,0);CHECK(attach(s2)==ESP_OK,"client B accepted after A left");close(c2);wait_closed(b+2,2000);wait_free();CHECK(dbl==0,"no double close");}
   printf("T5 20 connect/disconnect cycles\n");
   { int b=closes,ok=1;for(int i=0;i<20;i++){int c,s;conn(&c,&s,0);if(attach(s)!=ESP_OK)ok=0;close(c);wait_closed(b+i+1,2000);wait_free();}CHECK(ok&&closes==b+20,"20 cycles, %d closes",closes-b);CHECK(dbl==0,"no double close");}
+  printf("T5b FR-8 heap report at every session end\n");
+  { int b=closes,h=heap_logs,f=heap_free_calls,m=heap_min_calls;for(int i=0;i<5;i++){int c,s;conn(&c,&s,0);attach(s);close(c);wait_closed(b+i+1,2000);wait_free();}
+    CHECK(heap_logs-h==5,"5 sessions, %d heap reports",heap_logs-h);CHECK(heap_free_calls-f==5&&heap_min_calls-m==5,"free and minimum-ever heap read once per session (%d, %d)",heap_free_calls-f,heap_min_calls-m);}
   printf("T6 stale data never reaches a new client\n");
   { echo_on=1;uint8_t st[900];memset(st,0xAB,sizeof st);uart_inject(st,sizeof st);int c,s;conn(&c,&s,0);int b=closes;attach(s);uint8_t r[64];size_t g=rd_all(c,r,sizeof r,500);CHECK(g==0,"data received with no client is discarded (%zu)",g);close(c);wait_closed(b+1,2000);wait_free();
     // bytes still leaving TX when session 1 ends must not reach session 2
@@ -187,4 +195,5 @@ int main(void){ ub=malloc(CAP);ud=malloc(CAP*sizeof(int64_t));txlog=malloc(CAP);
       loss_stats_snapshot(&c);loss_stats_delta(&p,&c,&d); close(c1);
       CHECK(d.values[LOSS_TCP_TX_BYTES]>=2048&&d.values[LOSS_TCP_TX_BYTES]<=256+2304,"drain stops at what UART1 can hold (%u bytes counted as loss)",d.values[LOSS_TCP_TX_BYTES]);
       CHECK(d.values[LOSS_TCP_TX_BYTES]+d.values[DISCARD_NO_CLIENT_BYTES]==4000,"bytes beyond it go to no-client data, none counted twice (%u)",d.values[LOSS_TCP_TX_BYTES]+d.values[DISCARD_NO_CLIENT_BYTES]); } }
+  CHECK(heap_logs==closes,"every session end, %d of %d, reported the heap",(int)heap_logs,(int)closes);
   printf("\nRESULT pass=%d fail=%d send_calls=%ld\n",pass,fail,(long)send_calls);return fail?1:0;}

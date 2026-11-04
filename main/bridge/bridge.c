@@ -2,6 +2,7 @@
 #include "bridge.h"
 
 #include <errno.h>
+#include <inttypes.h>
 #include <stdatomic.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -11,6 +12,7 @@
 
 #include "esp_check.h"
 #include "esp_log.h"
+#include "esp_system.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
@@ -411,6 +413,11 @@ static void bridge_task(void *arg)
         }
 
         close(fd);
+
+        // FR-8: compare across sessions. lwIP can keep a closed connection for
+        // a while (TIME_WAIT, unacknowledged data), so a single value says little.
+        ESP_LOGI(TAG, "Heap after session: %" PRIu32 " bytes free, %" PRIu32 " minimum ever",
+                 esp_get_free_heap_size(), esp_get_minimum_free_heap_size());
 
         // Last step: a new client can only arrive after this socket is closed.
         atomic_store(&s_session_busy, false);
