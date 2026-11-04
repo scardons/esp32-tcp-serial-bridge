@@ -29,7 +29,7 @@ TCP client  <---- port 4001 ---->  ESP32  <---- TX GPIO32 / RX GPIO33 ---->  Ser
 | FR-5 | Text not available in this repository | Pending | Not defined | [FR-5](docs/test-records/hw-validation-fr5.md) |
 | FR-6 | Text not available in this repository | Pending | Not defined | [FR-6](docs/test-records/hw-validation-fr6.md) |
 | FR-7 | Report detected data loss every 10 s on UART0 | **Pending** | Host tests, HW-FR7-001 to 011 | [FR-7](docs/test-records/hw-validation-fr7.md) |
-| FR-8 | Half-open connections and Ethernet disconnection (from project notes) | Partial | H6, H7, H8 | [FR-8](docs/test-records/hw-validation-fr8.md) |
+| FR-8 | TCP client disconnect and timeout detection (keepalive, 30 s limit) | Partial | H6, H7, H8, Test 1, B, C1, C2, D, G, H | [FR-8](docs/test-records/hw-validation-fr8.md), [FR-8 test report](docs/testing/FR-8-TEST-REPORT.md) |
 
 The status comes from the records in [`docs/test-records/`](docs/test-records/). The FR-3 and FR-4 records don't yet cite the automated run below.
 
@@ -101,6 +101,7 @@ For tests on the board:
 | FR-3, FR-4 | `npm test` (H2, H3, H4) | Text and binary data return unchanged and in order, at a rate consistent with the baud rate |
 | FR-4 | `npm test` (H5) | The next client receives 0 bytes from a closed session, and its own session works |
 | FR-4, FR-8 | `npm run test:h6` | A client that stops reading is disconnected, and a new one is accepted |
+| FR-8 | Manual iptables, RST, idle, soak and pending-data tests ([FR-8 test report](docs/testing/FR-8-TEST-REPORT.md)) | A half-open client ends with `errno 113` within 30 s, a RST with `errno 104`, and a new client is accepted |
 | FR-1, FR-8 | `npm run manual:h7` | The client session ends safely when the cable is pulled, and the bridge recovers |
 | FR-1, FR-8 | `npm run manual:h8` | Same as H7, with an outage longer than 2 minutes |
 | FR-7 | `npm run test:host` | All host checks pass |
@@ -167,4 +168,5 @@ docs/
   fr7-data-loss-reporting.md   FR-7 design
   test-records/       Hardware validation record for each requirement
   test-reports/       Test results and manual procedures
+  testing/            Per-requirement test reports (FR-8)
 ```
