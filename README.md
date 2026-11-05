@@ -26,17 +26,17 @@ Requirement text from *ESP32 Serial-to-TCP Bridge: Requirements v1.0*.
 |---|---|---|---|---|
 | FR-1 | Connect over Ethernet with a static IPv4 address, netmask and gateway set in menuconfig. No DHCP | **Validated** | H7, H8, ping | [FR-1](docs/test-records/hw-validation-fr1.md) |
 | FR-2 | TCP server on port 4001, with at most one active client at a time | **Validated** | H1 | [FR-2](docs/test-records/hw-validation-fr2.md) |
-| FR-3 | Bytes received from the client are transmitted on UART1 TX (GPIO32) | Partial | H2, H3, H4 | [FR-3](docs/test-records/hw-validation-fr3.md) |
-| FR-4 | Bytes received on UART1 RX (GPIO33) are sent to the client | Partial | H2 to H6 | [FR-4](docs/test-records/hw-validation-fr4.md) |
+| FR-3 | Bytes received from the client are transmitted on UART1 TX (GPIO32) | **Validated** | H2, H3, H4 | [FR-3](docs/test-records/hw-validation-fr3.md) |
+| FR-4 | Bytes received on UART1 RX (GPIO33) are sent to the client | **Validated** | H2 to H6 | [FR-4](docs/test-records/hw-validation-fr4.md) |
 | FR-5 | UART1 at 8N1, no hardware flow control, baud rate set in menuconfig (default 115200, optionally 921600) | Pending | Not defined | [FR-5](docs/test-records/hw-validation-fr5.md) |
-| FR-6 | No lost, duplicated or reordered bytes in either direction, at those baud rates | Pending | Not defined | [FR-6](docs/test-records/hw-validation-fr6.md) |
-| FR-7 | Data loss that cannot be avoided is detected, counted and reported on UART0 every 10 s | **Pending** | Host tests, HW-FR7-001 to 011 | [FR-7](docs/test-records/hw-validation-fr7.md) |
+| FR-6 | No lost, duplicated or reordered bytes in either direction, at those baud rates | **Validated** at 115200 | H2, H3, H4 | [FR-6](docs/test-records/hw-validation-fr6.md) |
+| FR-7 | Data loss that cannot be avoided is detected, counted and reported on UART0 every 10 s | Partial | Host tests, HW-FR7-001 to 011 | [FR-7](docs/test-records/hw-validation-fr7.md) |
 | FR-8 | A client that disconnects or times out, including a half-open connection, is detected within 30 s and its resources are freed | Partial | H6, H7, H8 | [FR-8](docs/test-records/hw-validation-fr8.md) |
 | FR-9 | Recover from an Ethernet cable reconnection without a reboot | Partial | H9 | [FR-9](docs/test-records/hw-validation-fr9.md) |
 
-The status comes from the records in [`docs/test-records/`](docs/test-records/). The FR-3 and FR-4 records don't yet cite the automated run below. The FR-5 and FR-6 records predate the requirement text above.
+The status comes from the records in [`docs/test-records/`](docs/test-records/). FR-3, FR-4 and FR-6 are verified through the GPIO32 to GPIO33 jumper at 115200 8N1. FR-5 is not yet met: the UART1 baud rate is fixed in `main/uart/uart_driver.c`, not set in menuconfig.
 
-**Latest automated run:** H1 to H5 passed on firmware `23f991546`, and H4 measured 11,517 bytes/s with matching SHA256 hashes. See [the report](docs/test-reports/automated-test-results.md). H6 also passed, but [its report](docs/test-reports/automated-test-results-h6.md) doesn't identify the firmware. That build predates FR-7, so these results don't cover the current code. Firmware `f10f8b076` (FR-7 before the audit corrections) has no hardware results.
+**Latest automated run:** H1 to H5 passed on firmware `ce94f6077` (2026-11-05), with matching SHA256 hashes in H3 and H4, and H4 measured 11,509 bytes/s. See [the report](docs/test-reports/automated-test-results-2026-11-05.md). Its `Firmware` field is empty, because `BRIDGE_FIRMWARE` was not set, so the firmware is identified from the serial log of the same boot. H6 was skipped in this run. It last passed on older firmware, and [its report](docs/test-reports/automated-test-results-h6.md) doesn't identify the firmware. The previous run, on `0da27aa`, is kept in [automated-test-results.md](docs/test-reports/automated-test-results.md).
 
 **Latest manual run (H9, FR-9):** on firmware `ce94f6077`, the bridge recovered from 9 Ethernet outages of 4.0 s to 109.9 s without a reset. It restored the static IP every time, and every `LOSS:` report showed zero. All 5 cycles passed. In cycles 2 to 5, a client was accepted within 6.8 s, measured from the operator's Enter. The result is PASS for the scenarios exercised: no outage exceeded 120 s, so the ESP-NETIF lost-IP path is untested, and the time from physical reconnection was not reliably measured. See [the H9 report](docs/test-reports/manual-h9-2026-11-05T14-51-27-137Z.md).
 
