@@ -106,6 +106,7 @@ For tests on the board:
 | FR-3, FR-4 | `npm test` (H2, H3, H4) | Text and binary data return unchanged and in order, at a rate consistent with the baud rate |
 | FR-4 | `npm test` (H5) | The next client receives 0 bytes from a closed session, and its own session works |
 | FR-4, FR-8 | `npm run test:h6` | A client that stops reading is disconnected, and a new one is accepted |
+| FR-8 | Manual iptables, RST, idle, soak and pending-data tests ([FR-8 test report](docs/testing/FR-8-TEST-REPORT.md)) | A half-open client ends with `errno 113` within 30 s, a RST with `errno 104`, and a new client is accepted |
 | FR-1, FR-8 | `npm run manual:h7` | The client session ends safely when the cable is pulled, and the bridge recovers |
 | FR-1, FR-8 | `npm run manual:h8` | Same as H7, with an outage longer than 2 minutes |
 | FR-9 | `npm run manual:h9` | Every cycle recovers without a reboot, with a client accepted within 10 s of reconnection (project criterion) |
@@ -174,4 +175,5 @@ docs/
   fr7-data-loss-reporting.md   FR-7 design
   test-records/       Hardware validation record for each requirement
   test-reports/       Test results and manual procedures
+  testing/            Per-requirement test reports (FR-8)
 ```
