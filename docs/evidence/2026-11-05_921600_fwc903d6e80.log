@@ -1,0 +1,106 @@
+2026-11-05 14:03:06 ets Jul 29 2019 12:21:46
+2026-11-05 14:03:06 
+2026-11-05 14:03:06 rst:0x1 (POWERON_RESET),boot:0x12 (SPI_FAST_FLASH_BOOT)
+2026-11-05 14:03:06 configsip: 0, SPIWP:0xee
+2026-11-05 14:03:06 clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+2026-11-05 14:03:06 mode:DIO, clock div:2
+2026-11-05 14:03:06 load:0x3fff0040,len:6272
+2026-11-05 14:03:06 load:0x40078000,len:15824
+2026-11-05 14:03:06 load:0x40080400,len:3988
+2026-11-05 14:03:06 entry 0x40080644
+2026-11-05 14:03:06 I (27) boot: ESP-IDF v6.1 2nd stage bootloader
+2026-11-05 14:03:06 I (27) boot: compile time Nov  5 2026 12:51:11
+2026-11-05 14:03:06 I (28) boot: Multicore bootloader
+2026-11-05 14:03:06 I (29) boot: chip revision: v3.1
+2026-11-05 14:03:06 I (31) boot.esp32: SPI Speed      : 40MHz
+2026-11-05 14:03:06 I (35) boot.esp32: SPI Mode       : DIO
+2026-11-05 14:03:06 I (39) boot.esp32: SPI Flash Size : 4MB
+2026-11-05 14:03:06 I (42) boot: Enabling RNG early entropy source...
+2026-11-05 14:03:06 I (47) boot: Partition Table:
+2026-11-05 14:03:06 I (49) boot: ## Label            Usage          Type ST Offset   Length
+2026-11-05 14:03:06 I (56) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+2026-11-05 14:03:06 I (62) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+2026-11-05 14:03:06 I (69) boot:  2 factory          factory app      00 00 00010000 00100000
+2026-11-05 14:03:06 I (75) boot: End of partition table
+2026-11-05 14:03:06 I (79) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=14718h ( 83736) map
+2026-11-05 14:03:06 I (116) esp_image: segment 1: paddr=00024740 vaddr=3ffb0000 size=02d1ch ( 11548) load
+2026-11-05 14:03:06 I (121) esp_image: segment 2: paddr=00027464 vaddr=40080000 size=08bb4h ( 35764) load
+2026-11-05 14:03:06 I (136) esp_image: segment 3: paddr=00030020 vaddr=400d0020 size=3538ch (217996) map
+2026-11-05 14:03:07 I (213) esp_image: segment 4: paddr=000653b4 vaddr=40088bb4 size=03ca4h ( 15524) load
+2026-11-05 14:03:07 I (220) esp_image: segment 5: paddr=00069060 vaddr=50000000 size=00028h (    40) load
+2026-11-05 14:03:07 I (227) boot: Loaded app from partition at offset 0x10000
+2026-11-05 14:03:07 I (227) boot: Disabling RNG early entropy source...
+2026-11-05 14:03:07 I (239) cpu_start: Multicore app
+2026-11-05 14:03:07 I (247) cpu_start: GPIO 3 and 1 are used as console UART I/O pins
+2026-11-05 14:03:07 I (248) cpu_start: Pro cpu start user code
+2026-11-05 14:03:07 I (248) cpu_start: cpu freq: 160000000 Hz
+2026-11-05 14:03:07 I (250) app_init: Application information:
+2026-11-05 14:03:07 I (253) app_init: Project name:     tcp_serial_bridge
+2026-11-05 14:03:07 I (258) app_init: App version:      c8114ec
+2026-11-05 14:03:07 I (262) app_init: Compile time:     Nov  5 2026 14:02:22
+2026-11-05 14:03:07 I (267) app_init: ELF file SHA256:  c903d6e80...
+2026-11-05 14:03:07 I (271) app_init: ESP-IDF:          v6.1
+2026-11-05 14:03:07 I (275) efuse_init: Min chip rev:     v0.0
+2026-11-05 14:03:07 I (279) efuse_init: Max chip rev:     v3.99 
+2026-11-05 14:03:07 I (283) efuse_init: Chip rev:         v3.1
+2026-11-05 14:03:07 I (287) heap_init: Initializing. RAM available for dynamic allocation:
+2026-11-05 14:03:07 I (293) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
+2026-11-05 14:03:07 I (298) heap_init: At 3FFB4648 len 0002B9B8 (174 KiB): DRAM
+2026-11-05 14:03:07 I (303) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM
+2026-11-05 14:03:07 I (309) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM
+2026-11-05 14:03:07 I (314) heap_init: At 4008C858 len 000137A8 (77 KiB): IRAM
+2026-11-05 14:03:07 I (321) spi_flash: detected chip: generic
+2026-11-05 14:03:07 I (323) spi_flash: flash io: dio
+2026-11-05 14:03:07 I (328) main_task: Started on CPU0
+2026-11-05 14:03:07 I (328) main_task: Calling app_main()
+2026-11-05 14:03:07 I (328) MAIN: Firmware: version c8114ec, ELF SHA256 c903d6e80, built Nov  5 2026 14:02:22, ESP-IDF v6.1
+2026-11-05 14:03:07 I (338) uart: queue free spaces: 128
+2026-11-05 14:03:07 I (338) MAIN: UART1 initialized successfully: 921600 baud, 8N1, no flow control
+2026-11-05 14:03:07 I (888) NETWORK: Ethernet driver installed, PHY address 1
+2026-11-05 14:03:07 I (888) esp_eth.netif.netif_glue: c0:cd:d6:61:ae:b3
+2026-11-05 14:03:07 I (888) esp_eth.netif.netif_glue: ethernet attached to netif
+2026-11-05 14:03:09 I (2988) NETWORK: Ethernet started
+2026-11-05 14:03:09 I (2988) NETWORK: Ethernet link up: 100 Mbps, full duplex, MAC c0:cd:d6:61:ae:b3
+2026-11-05 14:03:09 I (2988) esp_netif_handlers: eth ip: 192.168.1.200, mask: 255.255.255.0, gw: 192.168.1.1
+2026-11-05 14:03:09 I (2988) NETWORK: TCP server listening on port 4001
+2026-11-05 14:03:10 I (2988) NETWORK: IPv4 ready: 192.168.1.200, mask 255.255.255.0, gateway 192.168.1.1
+2026-11-05 14:03:10 I (2988) main_task: Returned from app_main()
+2026-11-05 14:03:17 I (10358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:03:17 I (10368) LOSS: Reporter stack: 2028 of 3072 bytes never used
+2026-11-05 14:03:17 I (10878) NETWORK: TCP keepalive: idle 5 s, interval 2 s, 3 probes
+2026-11-05 14:03:17 I (10878) NETWORK: TCP client connected: 192.168.1.58:35884
+2026-11-05 14:03:17 I (10878) NETWORK: TCP server stack: 2984 of 4096 bytes never used
+2026-11-05 14:03:18 I (11138) BRIDGE: TCP client closed: disconnected by peer
+2026-11-05 14:03:18 I (11138) BRIDGE: Heap after session: 254292 bytes free, 250480 minimum ever
+2026-11-05 14:03:18 I (11138) BRIDGE: Bridge stack: 2776 of 4096 bytes never used
+2026-11-05 14:03:18 I (11148) NETWORK: TCP keepalive: idle 5 s, interval 2 s, 3 probes
+2026-11-05 14:03:18 I (11148) NETWORK: TCP client connected: 192.168.1.58:35894
+2026-11-05 14:03:27 W (20358) LOSS: 10.0 s: DATA LOSS: uart_rx_overflow=2 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:03:37 I (30358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:03:47 I (40358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:03:57 I (50358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:04:00 I (53578) BRIDGE: TCP client closed: disconnected by peer
+2026-11-05 14:04:00 I (53578) BRIDGE: Heap after session: 254292 bytes free, 239112 minimum ever
+2026-11-05 14:04:00 I (53578) BRIDGE: Bridge stack: 2760 of 4096 bytes never used
+2026-11-05 14:04:00 I (53738) NETWORK: TCP keepalive: idle 5 s, interval 2 s, 3 probes
+2026-11-05 14:04:00 I (53738) NETWORK: TCP client connected: 192.168.1.58:48118
+2026-11-05 14:04:00 I (53988) BRIDGE: TCP client closed: disconnected by peer
+2026-11-05 14:04:00 I (53998) BRIDGE: Heap after session: 254288 bytes free, 239112 minimum ever
+2026-11-05 14:04:00 I (54008) NETWORK: TCP keepalive: idle 5 s, interval 2 s, 3 probes
+2026-11-05 14:04:00 I (54008) NETWORK: TCP client connected: 192.168.1.58:48132
+2026-11-05 14:04:07 W (60358) LOSS: 10.0 s: DATA LOSS: uart_rx_overflow=1 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:04:11 I (64258) BRIDGE: TCP client closed: disconnected by peer
+2026-11-05 14:04:11 I (64258) BRIDGE: Heap after session: 254296 bytes free, 239112 minimum ever
+2026-11-05 14:04:11 I (64348) NETWORK: TCP keepalive: idle 5 s, interval 2 s, 3 probes
+2026-11-05 14:04:11 I (64348) NETWORK: TCP client connected: 192.168.1.58:33960
+2026-11-05 14:04:11 I (64598) BRIDGE: TCP client closed: disconnected by peer
+2026-11-05 14:04:11 I (64598) BRIDGE: Heap after session: 254292 bytes free, 239112 minimum ever
+2026-11-05 14:04:11 I (64608) NETWORK: TCP keepalive: idle 5 s, interval 2 s, 3 probes
+2026-11-05 14:04:11 I (64608) NETWORK: TCP client connected: 192.168.1.58:33968
+2026-11-05 14:04:11 I (64878) BRIDGE: TCP client closed: disconnected by peer
+2026-11-05 14:04:11 I (64878) BRIDGE: Heap after session: 254288 bytes free, 239112 minimum ever
+2026-11-05 14:04:11 I (64888) NETWORK: TCP keepalive: idle 5 s, interval 2 s, 3 probes
+2026-11-05 14:04:11 I (64888) NETWORK: TCP client connected: 192.168.1.58:33978
+2026-11-05 14:04:12 I (65168) BRIDGE: TCP client closed: disconnected by peer
+2026-11-05 14:04:12 I (65168) BRIDGE: Heap after session: 254292 bytes free, 239112 minimum ever
+2026-11-05 14:04:17 I (70358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0

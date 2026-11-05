@@ -12,6 +12,7 @@
     "manual:h7": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tests/manual/link-recovery.ts h7",
     "manual:h8": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tests/manual/link-recovery.ts h8",
     "manual:h9": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tests/manual/link-recovery.ts h9",
+    "manual:soak": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tests/manual/soak.ts",
     "test:host": "bash tests/host/run.sh",
     "typecheck": "tsc --noEmit"
   },

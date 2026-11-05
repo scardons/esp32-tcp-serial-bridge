@@ -12,7 +12,7 @@ TCP client  <---- port 4001 ---->  ESP32  <---- TX GPIO32 / RX GPIO33 ---->  Ser
 ## Behavior
 
 - **Static IP:** `192.168.1.200`, TCP port `4001`, set in `idf.py menuconfig` under *TCP-Serial Bridge Configuration*.
-- **UART1:** 8N1, no hardware flow control, 115200 baud by default. The baud rate is set in `idf.py menuconfig` under *TCP-Serial Bridge Configuration* → *UART Configuration* (9600 to 921600), and the boot log shows it: `MAIN: UART1 initialized successfully: 115200 baud, 8N1, no flow control`.
+- **UART1:** 8N1, no hardware flow control, 115200 baud by default. The baud rate is set in `idf.py menuconfig` under *TCP-Serial Bridge Configuration* → *UART Configuration* (9600 to 921600; only 115200 is validated), and the boot log shows it: `MAIN: UART1 initialized successfully: 115200 baud, 8N1, no flow control`.
 - **One client at a time:** a second client is closed immediately, and the first keeps working.
 - **Flow control:** unread TCP data slows the client through its TCP window, so a fast client can't overrun the UART.
 - **Session isolation:** UART data received with no client is discarded, so it never reaches the next client.
@@ -31,8 +31,8 @@ Requirement text from *ESP32 Serial-to-TCP Bridge: Requirements v1.0*. Each stat
 | FR-2 | TCP server on port 4001, with at most one active client at a time | **Validated** | H1, H5, manual `nc` | [FR-2](docs/test-records/hw-validation-fr2.md) |
 | FR-3 | Bytes received from the client are transmitted on UART1 TX (GPIO32) | **Validated** | H2, H3, H4 | [FR-3](docs/test-records/hw-validation-fr3.md) |
 | FR-4 | Bytes received on UART1 RX (GPIO33) are sent to the client | **Validated** | H2 to H6 | [FR-4](docs/test-records/hw-validation-fr4.md) |
-| FR-5 | UART1 at 8N1, no hardware flow control, baud rate set in menuconfig (default 115200, optionally 921600) | Implemented, hardware check pending | H3, H4 (8N1), build at 115200 and 921600 | [FR-5](docs/test-records/hw-validation-fr5.md) |
-| FR-6 | No lost, duplicated or reordered bytes in either direction, at those baud rates | **Validated** at 115200 | H2, H3, H4 | [FR-6](docs/test-records/hw-validation-fr6.md) |
+| FR-5 | UART1 at 8N1, no hardware flow control, baud rate set in menuconfig (default 115200, optionally 921600) | **Validated** at 115200 (921600 not supported) | Boot log, H3, H4 on `7ffc134`, 921600 run | [FR-5](docs/test-records/hw-validation-fr5.md) |
+| FR-6 | No lost, duplicated or reordered bytes in either direction, at those baud rates | **Validated** at 115200 | H2, H3, H4, NFR-3 soak | [FR-6](docs/test-records/hw-validation-fr6.md) |
 | FR-7 | Data loss that cannot be avoided is detected, counted and reported on UART0 every 10 s | Partial | Host tests, HW-FR7-001 to 011 | [FR-7](docs/test-records/hw-validation-fr7.md) |
 | FR-8 | A client that disconnects or times out, including a half-open connection, is detected within 30 s and its resources are freed | **Validated** | H6, H7, H8, H9, [TR-FR8-002](docs/testing/FR-8-TEST-REPORT.md) (keepalive, RST, idle, half-open, soak, pending data) | [FR-8](docs/test-records/hw-validation-fr8.md) |
 | FR-9 | Recover from an Ethernet cable reconnection without a reboot | **Validated** | H9 (9 outages, 4 s to 110 s), H8 (216 s outage) | [FR-9](docs/test-records/hw-validation-fr9.md) |
@@ -41,28 +41,59 @@ Requirement text from *ESP32 Serial-to-TCP Bridge: Requirements v1.0*. Each stat
 
 | Requirement | Missing evidence | How to close it |
 |---|---|---|
-| FR-5 | The firmware with the menuconfig option (`c726a91`) has not yet run on hardware | Flash it, check the `UART1 initialized successfully: 115200 baud, 8N1, no flow control` boot line, and run `npm test` (automated, about 1 minute). 921600 is optional |
 | FR-7 | HW-FR7-004 (link loss with data in flight), HW-FR7-006 (line errors) and HW-FR7-009 (break). 7 of the 11 plan tests have passed on hardware | Pull the cable during H4 (about 1 minute). 006 needs a USB-UART adapter on GPIO33, and 009 a resistor from GPIO33 to GND |
+
+**Final firmware:** version `7ffc134`, ELF SHA256 `ae7ba8e58d739ca728c4e468d6e00e24bd2c2622ecb315bd66f916a0604a3259`. This build passed `npm test` and the NFR-3 soak on hardware.
 
 **Notes on the evidence:**
 - **The jumper.** FR-3, FR-4 and FR-6 are verified through the GPIO32 to GPIO33 jumper at 115200 8N1, so the two directions are verified together.
 - **FR-8 half-open timing.** The 30 s limit rests on the keepalive configuration read back on hardware (at most about 11 s) and the operator's observation of about 9 s. No timestamped measurement was retained (see the record).
+- **921600.** At 921600 the bridge loses bytes under sustained traffic (UART1 FIFO overflow, detected and reported by FR-7), so it is not supported. FR-5 makes 921600 optional.
 - **FR-8 and FR-9 firmware.** Their evidence ran on three firmware builds (`23f991546`, `8d79dbe83` and `ce94f6077`). The code each test exercises is unchanged between that build and the current source, as each record explains.
 
 ### Non-Functional Requirements
 
-NFR-1 to NFR-5 are defined in *Requirements v1.0*, but their text is not yet in this repository, so they have not been assessed. None is claimed as validated.
+| Requirement | Description | Status | Evidence | Record |
+|---|---|---|---|---|
+| NFR-1 | All console logging on UART0. UART1 only for bridge data, with no log interference | **PASS** | Console configuration, source review, and H3/H4 integrity while logging | [NFR-1](docs/test-records/validation-nfr1.md) |
+| NFR-2 | Buffer sizes, task stacks and heap budget documented | **PASS** | [Memory and buffers](#memory-and-buffers) below, with stack margins measured on hardware | [NFR-2](docs/test-records/validation-nfr2.md) |
+| NFR-3 | 15-minute continuous run with stable free heap | **PASS** | 15.3 min, 33 of 33 sessions, 10.3 MB verified, 0 resets, heap 253,856 to 254,292 B, minimum unchanged | [NFR-3](docs/test-records/validation-nfr3.md) |
+| NFR-4 | Network, UART and bridge modules. Bridge buffer logic testable without hardware | **PASS** | Module layout. Host tests 90/0, 62/0, 59/0, 25/0 with ASan/UBSan and with TSan | [NFR-4](docs/test-records/validation-nfr4.md) |
+| NFR-5 | Return codes checked. Builds with ESP-IDF 6.1 without errors | **PASS** | Full return code review. `7ffc134` builds with no errors or warnings | [NFR-5](docs/test-records/validation-nfr5.md) |
+
+### Memory and Buffers
+
+| Item | Size | Measured (firmware `7ffc134`) |
+|---|---|---|
+| Bridge buffers (TCP→UART, UART→TCP) | 2 × 256 B, static | |
+| UART1 RX / TX ring buffers | 2,048 B each | |
+| UART1 hardware RX FIFO / event queue | 128 B / 128 entries | |
+| `LOSS:` report line | 384 B, static | |
+| lwIP TCP send buffer / window / MSS | 5,760 / 5,760 / 1,440 B | |
+| Ethernet DMA buffers | 10 RX + 10 TX × 512 B | |
+| `bridge` task stack (priority 5) | 4,096 B | 2,760 B never used (peak 1,336 B) |
+| `tcp_server` task stack (priority 5) | 4,096 B | 2,952 B never used (peak 1,144 B) |
+| `loss_reporter` task stack (priority 3) | 3,072 B | 2,028 B never used (peak 1,044 B) |
+| Static DRAM (`.data` + `.bss`) | 17,985 B of 180,736 B (9.95 %) | |
+| Heap regions at boot (DRAM and D/IRAM) | 313,960 B | |
+| Free heap at steady state | | 253,856 to 254,292 B |
+| Lowest free heap ever | | 239,252 B (peak use, during H4/H5) |
+
+The application allocates no heap memory itself. The bridge, server and reporter stacks log their lowest margin whenever it reaches a new low. Every size, with its source, is in [the NFR-2 record](docs/test-records/validation-nfr2.md).
 
 ### Latest Results
 
 | Run | Firmware | Result | Report |
 |---|---|---|---|
+| `npm test`, H1 to H5 (2026-11-05, final) | `7ffc134` / `ae7ba8e58` | **PASS**, 8 of 8. Boot line `115200 baud, 8N1, no flow control`. H3 and H4 SHA256 match, H4 11,512 bytes/s | [report](docs/test-reports/automated-test-results-2026-11-05-fw7ffc134.md) |
+| NFR-3 soak, 15 min (2026-11-05) | `7ffc134` / `ae7ba8e58` | **PASS**, 33 of 33 sessions, 10,264,320 bytes verified, 0 resets, stable heap, no loss reported | [report](docs/test-reports/soak-2026-11-05T19-06-33-635Z.md), [log](docs/evidence/2026-11-05_final-run_fwae7ba8e58.log) |
+| H2 to H4 at 921600 (2026-11-05) | 921600 build of `c8114ec` | **FAIL** (optional rate): H2 passed, H3 and H4 lost bytes, reported as `uart_rx_overflow` | [report](docs/test-reports/automated-test-results-921600-2026-11-05.md) |
 | `npm test`, H1 to H5 (2026-11-05) | `ce94f6077` | **PASS**, 8 of 8. H3 and H4 SHA256 match, H4 11,509 bytes/s. H6 skipped | [automated-test-results-2026-11-05.md](docs/test-reports/automated-test-results-2026-11-05.md) |
 | H9, 5 cycles (2026-11-05) | `ce94f6077` | **PASS**: 9 outages of 4.0 s to 109.9 s, static IP restored 9 of 9, no reset, all `LOSS:` reports at zero. Worst client acceptance 6.8 s from the operator's Enter | [H9 report](docs/test-reports/manual-h9-2026-11-05T14-51-27-137Z.md) |
 | `npm run test:h6`, H6 (2026-11-05) | `ce94f6077` | **PASS**, 5 of 5. `client stalled` after 7.0 s, then `LOSS:` reported `tcp_send_failures=1`, `tcp_tx_bytes=2260` and `uart_rx_overflow=247`, and a new client was accepted | [automated-test-results-h6-2026-11-05.md](docs/test-reports/automated-test-results-h6-2026-11-05.md) |
 | FR-8 test series (2026-11-04) | `8d79dbe83` | Keepalive, RST, 300 s idle, half-open detection, 200-cycle soak and pending data all observed. The report marks half-open timing as inconclusive (no timestamps) | [TR-FR8-002](docs/testing/FR-8-TEST-REPORT.md) |
 | H8, 216 s outage (2026-11-02) | `23f991546` | Static IP restored, new client accepted, no reset | [log](docs/evidence/2026-11-02_h8_fw23f991546.log) |
-| Host tests (2026-11-05) | Source `c726a91` | **PASS**: FR-7 62/0 and 59/0, bridge 90/0, FR-8 keepalive 25/0 | `bash tests/host/run.sh` |
+| Host tests (2026-11-05) | Source `7ffc134` | **PASS** with ASan/UBSan and with TSan: FR-7 62/0 and 59/0, bridge 90/0, FR-8 keepalive 25/0 | `bash tests/host/run.sh`, `bash tests/host/run.sh tsan` |
 | `npm test`, H1 to H5 (2026-11-03) | `0da27aa` | PASS | [automated-test-results.md](docs/test-reports/automated-test-results.md) |
 
 The 2026-11-05 `npm test` and H6 reports don't name the firmware, because `BRIDGE_FIRMWARE` was not set. It is identified from the serial log of the same boot. The serial logs behind these results are kept in [`docs/evidence/`](docs/evidence/).
@@ -71,7 +102,7 @@ The 2026-11-05 `npm test` and H6 reports don't name the firmware, because `BRIDG
 
 - **`LOSS:` lines report detected loss only.** "No data loss" can appear after an abnormal session, because data held in lwIP buffers isn't visible to the firmware. Data still held by UART1 is counted.
 - **H5 can end either way.** The close races with the echo, so the report may or may not show loss, and `tcp_send_failures` may be 0 or 1. Only the isolation result matters for H5.
-- **921600 is not yet tested on hardware.** It builds, but FR-5 and FR-6 are only shown at 115200.
+- **921600 loses data.** Under sustained traffic the UART1 hardware FIFO overflows (H3 lost 9 bytes and H4 20). The loss is detected and reported as `uart_rx_overflow`. Use 115200, the validated rate.
 - **The FR-7 line-error and break counters** have only been exercised by the host tests.
 - **Frame-error storms are capped.** Above 2,000 frame errors and breaks in one interval, their interrupts pause until the next report, and `rx_error_pauses` shows it. The counts for that interval are a lower bound.
 
@@ -109,7 +140,7 @@ There are three levels. Only the last two run against the board, and only result
 |---|---|---|
 | Host tests | Real firmware source built for the PC, against mocks | No |
 | Automated integration tests | The running bridge, over TCP (H1 to H6) | Yes |
-| Manual tests | Ethernet cable disconnection (H7, H8, H9), FR-8 half-open and RST tests, and the FR-7 hardware plan | Yes |
+| Manual tests | Ethernet cable disconnection (H7, H8, H9), FR-8 half-open and RST tests, the NFR-3 soak, and the FR-7 hardware plan | Yes |
 
 ### Setup
 
@@ -159,6 +190,7 @@ H6 floods the UART for up to 100 s and forces a disconnect. H7, H8 and H9 need s
 | `npm run manual:h7` | H7, assisted | Operator-paced |
 | `npm run manual:h8` | H8, assisted | Over 2 minutes |
 | `npm run manual:h9` | H9, assisted: repeated link recovery, timed (FR-9) | Operator-paced, about 30 s per cycle |
+| `npm run manual:soak` | NFR-3 continuous run: back-to-back verified echo sessions (`SOAK_MINUTES`, default 15) | 15 minutes, unattended |
 | `npm run test:host` | Host tests with ASan and UBSan, including the real 10 s report period | About 3 minutes |
 | `bash tests/host/run.sh quick` | Host tests without sanitizers or the real 10 s period | About 2 minutes |
 | `bash tests/host/run.sh tsan` | Host tests with ThreadSanitizer | About 3 minutes |
@@ -202,11 +234,11 @@ main/
 tests/
   host/               Firmware logic on the PC, with mocks
   integration/        H1 to H6 over TCP
-  manual/             H7, H8 and H9 assisted scripts
+  manual/             H7, H8, H9 assisted scripts and the NFR-3 soak
   support/            Shared client, configuration and report generator
 docs/
   fr7-data-loss-reporting.md   FR-7 design
-  test-records/       Hardware validation record for each requirement, with how to run its tests
+  test-records/       Validation record for each FR and NFR, with how to run its tests
   test-reports/       Generated test reports and manual procedures
   testing/            Per-requirement test reports (FR-8)
   evidence/           Serial logs cited by the records
