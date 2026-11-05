@@ -11,6 +11,7 @@
     "test:h6": "RUN_H6=true BRIDGE_REPORT_PATH=docs/test-reports/automated-test-results-h6.md jest tests/integration/stalled-client.test.ts",
     "manual:h7": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tests/manual/link-recovery.ts h7",
     "manual:h8": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tests/manual/link-recovery.ts h8",
+    "manual:h9": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tests/manual/link-recovery.ts h9",
     "test:host": "bash tests/host/run.sh",
     "typecheck": "tsc --noEmit"
   },

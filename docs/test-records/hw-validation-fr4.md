@@ -104,6 +104,32 @@ I (586796) NETWORK: TCP client connected: 192.168.1.170:58219
 I (610876) BRIDGE: TCP client closed: client stalled
 ```
 
+## How to Run These Tests
+
+**Before you start**
+
+1. Flash the firmware, and note the ELF SHA256 from the `MAIN: Firmware:` boot line.
+2. Connect the GPIO32 to GPIO33 jumper.
+3. Open the serial monitor and save its log: `idf.py -p /dev/ttyUSB1 monitor --timestamps | tee fr4-test.log`.
+4. Close any other TCP client.
+
+| Test | How to run it | What to check | Passes when |
+|---|---|---|---|
+| HW-FR4-001 | `BRIDGE_FIRMWARE=<ELF SHA256> BRIDGE_REPORT_PATH=docs/test-reports/<new file>.md npm test -- -t "H2:"` | Jest output and the report | The client receives the text unchanged and in order |
+| HW-FR4-002 | Same, with `-t "H3:"` | Jest output | All 20,480 bytes are received unchanged |
+| HW-FR4-003 | Same, with `-t "H4:"` | Jest output, plus `LOSS:` in the serial log | All 256,000 bytes are received unchanged and in order, with `no data loss` |
+| HW-FR4-004 | Same, with `-t "H5:"` | Jest output, plus the two sessions in the serial log | The next client receives 0 bytes from the closed session, and its own echo works |
+| HW-FR4-005 | `RUN_H6=true BRIDGE_FIRMWARE=<ELF SHA256> BRIDGE_REPORT_PATH=docs/test-reports/<new h6 file>.md npx jest tests/integration/stalled-client.test.ts` (or `npm run test:h6`, which overwrites the H6 report) | `BRIDGE: TCP client closed: client stalled`, then a new `TCP client connected` | The stalled client is disconnected and a new one is accepted. A `BLOCKED` result (for example, a NAT path) means the test could not judge the firmware |
+
+H6 floods the UART for up to 100 s, so allow about 2 minutes.
+
+**Testing FR-4 on its own (optional).**
+1. Remove the jumper, and connect the TX pin of a 3.3 V USB-UART adapter to GPIO33, with a common ground.
+2. Run `nc -v 192.168.1.200 4001`.
+3. Type in `picocom -b 115200 /dev/ttyUSB<n>`.
+
+The text must appear in the `nc` terminal unchanged.
+
 ## Status
 
 **FR-4: PARTIAL.** The stalled-client path was observed on hardware. Forwarded data integrity has no retained evidence.

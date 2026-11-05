@@ -37,14 +37,14 @@ export class BridgeClient {
   }
 
   /** Opens a TCP connection. It does not prove that the bridge accepted the client. */
-  static connect(): Promise<BridgeClient> {
+  static connect(attemptTimeoutMs = bridge.connectTimeoutMs): Promise<BridgeClient> {
     return new Promise((resolve, reject) => {
       const socket = net.createConnection({ host: bridge.host, port: bridge.port });
       const timer = setTimeout(() => {
         socket.destroy();
         reject(new Error(`ESP32 unavailable: no TCP connection to ${target} ` +
-          `within ${bridge.connectTimeoutMs} ms. Check power, cable and BRIDGE_HOST.`));
-      }, bridge.connectTimeoutMs);
+          `within ${attemptTimeoutMs} ms. Check power, cable and BRIDGE_HOST.`));
+      }, attemptTimeoutMs);
 
       socket.once('error', (error: NodeJS.ErrnoException) => {
         clearTimeout(timer);
@@ -62,11 +62,12 @@ export class BridgeClient {
   }
 
   /** Connects and retries until the bridge keeps the connection open. */
-  static async connectActive(timeoutMs = 5000): Promise<BridgeClient> {
+  static async connectActive(timeoutMs = 5000,
+                             attemptTimeoutMs = bridge.connectTimeoutMs): Promise<BridgeClient> {
     const deadline = Date.now() + timeoutMs;
 
     do {
-      const client = await BridgeClient.connect();
+      const client = await BridgeClient.connect(attemptTimeoutMs);
 
       if (!(await client.waitForClose(REJECTION_WINDOW_MS))) {
         return client;

@@ -6,6 +6,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <stdatomic.h>
 #include <stdbool.h>
 #include <sys/select.h>
@@ -18,6 +19,7 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_netif.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
@@ -44,6 +46,52 @@ static esp_eth_netif_glue_handle_t s_eth_glue = NULL;
 static TaskHandle_t s_server_task = NULL;
 static SemaphoreHandle_t s_server_stopped = NULL;
 static atomic_bool s_server_stop_requested = false;
+
+/*
+ * FR-9 link recovery state, for the log only. Every Ethernet and IP handler
+ * runs on the default event loop task, so this needs no locking.
+ */
+static esp_netif_ip_info_t s_static_ip_info = {0};
+static uint32_t s_link_down_count = 0;
+static int64_t s_link_down_us = -1;     // When the current outage began, or -1
+static bool s_ip_restore_pending = false;
+
+static uint32_t ms_since(int64_t start_us)
+{
+    return (uint32_t)((esp_timer_get_time() - start_us) / 1000);
+}
+
+static bool matches_static_ip(const esp_netif_ip_info_t *ip_info)
+{
+    return ip_info->ip.addr == s_static_ip_info.ip.addr &&
+           ip_info->netmask.addr == s_static_ip_info.netmask.addr &&
+           ip_info->gw.addr == s_static_ip_info.gw.addr;
+}
+
+static void on_link_down(void)
+{
+    s_link_down_count++;
+    s_link_down_us = esp_timer_get_time();
+    s_ip_restore_pending = false;
+
+    ESP_LOGW(TAG, "Ethernet link down (#%" PRIu32 ")", s_link_down_count);
+}
+
+// Runs after log_link_up(). The first link up after boot is not a recovery.
+static void on_link_restored(void)
+{
+    if (s_link_down_us < 0) {
+        return;
+    }
+
+    const uint32_t outage_ms = ms_since(s_link_down_us);
+
+    s_link_down_us = -1;
+    s_ip_restore_pending = true;
+
+    ESP_LOGI(TAG, "Ethernet link restored after %" PRIu32 ".%01" PRIu32 " s outage (#%" PRIu32 ")",
+             outage_ms / 1000, (outage_ms % 1000) / 100, s_link_down_count);
+}
 
 static void log_link_up(void)
 {
@@ -74,9 +122,10 @@ static void on_eth_event(void *arg, esp_event_base_t event_base,
         break;
     case ETHERNET_EVENT_CONNECTED:
         log_link_up();
+        on_link_restored();
         break;
     case ETHERNET_EVENT_DISCONNECTED:
-        ESP_LOGW(TAG, "Ethernet link down");
+        on_link_down();
         bridge_request_disconnect();
         break;
     case ETHERNET_EVENT_STOP:
@@ -97,6 +146,48 @@ static void on_got_ip(void *arg, esp_event_base_t event_base,
              IP2STR(&event->ip_info.ip),
              IP2STR(&event->ip_info.netmask),
              IP2STR(&event->ip_info.gw));
+
+    // Only reported: the address in use is whatever ESP-NETIF applied.
+    if (!matches_static_ip(&event->ip_info)) {
+        ESP_LOGE(TAG, "IPv4 does not match the static configuration " IPSTR ", mask " IPSTR
+                      ", gateway " IPSTR, IP2STR(&s_static_ip_info.ip),
+                 IP2STR(&s_static_ip_info.netmask), IP2STR(&s_static_ip_info.gw));
+    } else if (s_ip_restore_pending) {
+        ESP_LOGI(TAG, "Static IP restored after link recovery (#%" PRIu32 ")", s_link_down_count);
+    }
+
+    s_ip_restore_pending = false;
+}
+
+/*
+ * ESP-NETIF posts this when its lost-IP timer (CONFIG_ESP_NETIF_IP_LOST_TIMER_INTERVAL)
+ * fires while the netif has no address. The timer starts at a link down but is
+ * not cancelled at link up, and a later link down does not restart it, so it
+ * can fire during a later, shorter outage. The time logged is only how long
+ * the current outage has lasted, not when the timer started.
+ *
+ * With DHCP stopped, ESP-NETIF keeps the static configuration and applies it
+ * again on the next link up. While the netif is down, esp_netif_get_ip_info()
+ * returns that stored configuration, so this checks it was kept.
+ */
+static void on_lost_ip(void *arg, esp_event_base_t event_base,
+                       int32_t event_id, void *event_data)
+{
+    esp_netif_ip_info_t ip_info = {0};
+    const esp_err_t err = esp_netif_get_ip_info(s_eth_netif, &ip_info);
+    const uint32_t outage_ms = s_link_down_us >= 0 ? ms_since(s_link_down_us) : 0;
+
+    if (err == ESP_OK && matches_static_ip(&ip_info)) {
+        ESP_LOGW(TAG, "ESP-NETIF lost-IP event during outage #%" PRIu32 " (%" PRIu32 " s into it; "
+                      "the timer may date from an earlier link down). "
+                      "Static IP " IPSTR " kept for reconnection",
+                 s_link_down_count, outage_ms / 1000, IP2STR(&ip_info.ip));
+    } else {
+        ESP_LOGE(TAG, "ESP-NETIF lost-IP event during outage #%" PRIu32 " (%" PRIu32 " s into it), "
+                      "and the static configuration was not kept: " IPSTR " (%s)",
+                 s_link_down_count, outage_ms / 1000, IP2STR(&ip_info.ip),
+                 esp_err_to_name(err));
+    }
 }
 
 static esp_err_t install_eth_driver(void)
@@ -163,6 +254,8 @@ static esp_err_t apply_static_ip(void)
     ESP_RETURN_ON_ERROR(esp_netif_set_ip_info(s_eth_netif, &ip_info), TAG,
                         "Failed to set static IP");
 
+    s_static_ip_info = ip_info;
+
     return ESP_OK;
 }
 
@@ -186,6 +279,7 @@ static esp_err_t attach_netif(void)
 
 static void network_cleanup(void)
 {
+    esp_event_handler_unregister(IP_EVENT, IP_EVENT_ETH_LOST_IP, &on_lost_ip);
     esp_event_handler_unregister(IP_EVENT, IP_EVENT_ETH_GOT_IP, &on_got_ip);
     esp_event_handler_unregister(ETH_EVENT, ESP_EVENT_ANY_ID, &on_eth_event);
 
@@ -252,6 +346,9 @@ esp_err_t network_init(void)
     ESP_GOTO_ON_ERROR(esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP,
                                                  &on_got_ip, NULL),
                       err, TAG, "Failed to register IP events");
+    ESP_GOTO_ON_ERROR(esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_LOST_IP,
+                                                 &on_lost_ip, NULL),
+                      err, TAG, "Failed to register lost IP events");
 
     ret = esp_eth_start(s_eth_handle);
 
