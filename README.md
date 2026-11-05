@@ -3,7 +3,7 @@
 Firmware that turns an ESP32-Ethernet-Kit into a TCP-to-serial bridge. A client connects over Ethernet, and the bytes it sends and receives pass through UART1, so a serial device can be reached from the network.
 
 ```text
-                 Ethernet                       UART1, 115200 8N1
+                 Ethernet                       UART1, 8N1, 115200 by default
 TCP client  <---- port 4001 ---->  ESP32  <---- TX GPIO32 / RX GPIO33 ---->  Serial device
                                      |
                                      +---- UART0 console: logs and loss reports
@@ -12,8 +12,9 @@ TCP client  <---- port 4001 ---->  ESP32  <---- TX GPIO32 / RX GPIO33 ---->  Ser
 ## Behavior
 
 - **Static IP:** `192.168.1.200`, TCP port `4001`, set in `idf.py menuconfig` under *TCP-Serial Bridge Configuration*.
+- **UART1:** 8N1, no hardware flow control, 115200 baud by default. The baud rate is set in `idf.py menuconfig` under *TCP-Serial Bridge Configuration* → *UART Configuration* (9600 to 921600), and the boot log shows it: `MAIN: UART1 initialized successfully: 115200 baud, 8N1, no flow control`.
 - **One client at a time:** a second client is closed immediately, and the first keeps working.
-- **Flow control:** unread TCP data slows the client through its TCP window, so a fast client can't overrun the 115200 baud UART.
+- **Flow control:** unread TCP data slows the client through its TCP window, so a fast client can't overrun the UART.
 - **Session isolation:** UART data received with no client is discarded, so it never reaches the next client.
 - **Recovery:** a client that accepts no data for 5 s is disconnected. The bridge also handles Ethernet link loss and returns without a restart. Each outage is numbered on UART0 (`Ethernet link down (#n)`, `Ethernet link restored after <x.x> s outage (#n)`, `Static IP restored after link recovery (#n)`).
 - **Loss reporting:** one `LOSS:` line every 10 s on UART0. See [the FR-7 design](docs/fr7-data-loss-reporting.md).
@@ -28,13 +29,13 @@ Requirement text from *ESP32 Serial-to-TCP Bridge: Requirements v1.0*.
 | FR-2 | TCP server on port 4001, with at most one active client at a time | **Validated** | H1 | [FR-2](docs/test-records/hw-validation-fr2.md) |
 | FR-3 | Bytes received from the client are transmitted on UART1 TX (GPIO32) | **Validated** | H2, H3, H4 | [FR-3](docs/test-records/hw-validation-fr3.md) |
 | FR-4 | Bytes received on UART1 RX (GPIO33) are sent to the client | **Validated** | H2 to H6 | [FR-4](docs/test-records/hw-validation-fr4.md) |
-| FR-5 | UART1 at 8N1, no hardware flow control, baud rate set in menuconfig (default 115200, optionally 921600) | Pending | Not defined | [FR-5](docs/test-records/hw-validation-fr5.md) |
+| FR-5 | UART1 at 8N1, no hardware flow control, baud rate set in menuconfig (default 115200, optionally 921600) | Implemented, hardware test pending | Code review, H3, H4 (8N1 at 115200) | [FR-5](docs/test-records/hw-validation-fr5.md) |
 | FR-6 | No lost, duplicated or reordered bytes in either direction, at those baud rates | **Validated** at 115200 | H2, H3, H4 | [FR-6](docs/test-records/hw-validation-fr6.md) |
 | FR-7 | Data loss that cannot be avoided is detected, counted and reported on UART0 every 10 s | Partial | Host tests, HW-FR7-001 to 011 | [FR-7](docs/test-records/hw-validation-fr7.md) |
 | FR-8 | A client that disconnects or times out, including a half-open connection, is detected within 30 s and its resources are freed | Partial | H6, H7, H8 | [FR-8](docs/test-records/hw-validation-fr8.md) |
 | FR-9 | Recover from an Ethernet cable reconnection without a reboot | Partial | H9 | [FR-9](docs/test-records/hw-validation-fr9.md) |
 
-The status comes from the records in [`docs/test-records/`](docs/test-records/). FR-3, FR-4 and FR-6 are verified through the GPIO32 to GPIO33 jumper at 115200 8N1. FR-5 is not yet met: the UART1 baud rate is fixed in `main/uart/uart_driver.c`, not set in menuconfig.
+The status comes from the records in [`docs/test-records/`](docs/test-records/). FR-3, FR-4 and FR-6 are verified through the GPIO32 to GPIO33 jumper at 115200 8N1. FR-5's menuconfig baud rate option (`CONFIG_BRIDGE_UART_BAUD_RATE`, default 115200) is implemented and builds at 115200 and 921600, with the host tests passing. Its hardware run on the new firmware is pending.
 
 **Latest automated run:** H1 to H5 passed on firmware `ce94f6077` (2026-11-05), with matching SHA256 hashes in H3 and H4, and H4 measured 11,509 bytes/s. See [the report](docs/test-reports/automated-test-results-2026-11-05.md). Its `Firmware` field is empty, because `BRIDGE_FIRMWARE` was not set, so the firmware is identified from the serial log of the same boot. H6 was skipped in this run. It last passed on older firmware, and [its report](docs/test-reports/automated-test-results-h6.md) doesn't identify the firmware. The previous run, on `0da27aa`, is kept in [automated-test-results.md](docs/test-reports/automated-test-results.md).
 
@@ -51,7 +52,7 @@ The status comes from the records in [`docs/test-records/`](docs/test-records/).
 | Item | Value |
 |---|---|
 | Board | ESP32-Ethernet-Kit v1.2, ESP32-WROVER-E |
-| Bridge UART | UART1: TX GPIO32, RX GPIO33, 115200 8N1 |
+| Bridge UART | UART1: TX GPIO32, RX GPIO33, 8N1, no flow control. Baud rate set in `idf.py menuconfig` → *TCP-Serial Bridge Configuration* → *UART Configuration* (default 115200, up to 921600) |
 | Console | UART0, `/dev/ttyUSB1` on the test PC, 115200 baud |
 | Test wiring | Jumper between GPIO32 and GPIO33, so TCP data echoes back to the client |
 

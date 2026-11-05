@@ -13,6 +13,14 @@
  * and send and receive serial data.
  */
 
+// Set in menuconfig (FR-5). The host tests have no sdkconfig and model 115200.
+#ifdef ESP_PLATFORM
+#include "sdkconfig.h"
+#define UART_DRIVER_BAUD_RATE CONFIG_BRIDGE_UART_BAUD_RATE
+#else
+#define UART_DRIVER_BAUD_RATE 115200
+#endif
+
 #define UART_DRIVER_RX_BUFFER_SIZE 2048 // RX ring buffer
 #define UART_DRIVER_RX_FIFO_SIZE   128  // Hardware RX FIFO
 
