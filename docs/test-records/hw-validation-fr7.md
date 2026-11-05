@@ -5,13 +5,13 @@
 | Record ID | HW-VAL-007 |
 | Requirement | FR-7: The firmware must report detected data loss every 10 seconds through the UART0 console. |
 | Project | ESP32 TCP Serial Bridge |
-| Status | **PARTIAL: 8 of 11 hardware tests passed, 1 partly (010); 2 have no hardware evidence (006, 009)** |
+| Status | **PARTIAL: 9 of 11 hardware tests passed, 1 partly (010); 1 has no hardware evidence (006)** |
 | Requirement text | Any data loss that cannot be avoided shall be detected, counted, and reported on the console (UART0) every 10 seconds. (*Requirements v1.0*) |
 | Implementation | `docs/fr7-data-loss-reporting.md` |
 
 ## Purpose and Scope
 
-This record defines the hardware validation of FR-7. Results are added here as the tests are run on the ESP32. Tests on the PC are not hardware validation. HW-FR7-001, 002, 003, 004, 005, 007, 008 and 011 have passed on hardware, and HW-FR7-010 has partly passed. HW-FR7-006 and 009 have no hardware evidence.
+This record defines the hardware validation of FR-7. Results are added here as the tests are run on the ESP32. Tests on the PC are not hardware validation. HW-FR7-001, 002, 003, 004, 005, 007, 008, 009 and 011 have passed on hardware, and HW-FR7-010 has partly passed. HW-FR7-006 has no hardware evidence.
 
 The plan covers the firmware with the P0 audit corrections: frame errors (M1), event queue drops (M2), session-end accounting (M3), and L1 to L6. Firmware `f10f8b076` predates them and is not a candidate for this record.
 
@@ -33,7 +33,7 @@ The plan covers the firmware with the P0 audit corrections: frame errors (M1), e
 | HW-FR7-006 | Line errors | Feed GPIO33 at a wrong baud rate | `uart_rx_errors` above 0. A sustained stream at a wrong rate may also show `rx_error_pauses=1`, and the next interval must report again | PENDING: needs a USB-UART adapter on GPIO33. No retained log shows `uart_rx_errors` above 0 |
 | HW-FR7-007 | Regression | Compare a full `npm test` and H6 run with the earlier reports | Same results, with no `task_wdt` | **PASS** (E13, E21): `npm test` and H6 on `ce94f6077` match the earlier reports, with no `task_wdt` |
 | HW-FR7-008 | Event queue under load | During H4 (256,000 bytes) and H6, read every `LOSS:` line | `event_queue_drops=0`. Any drop is still counted in the other fields, but means that the reporter fell behind | **PASS** (E14, E21): `event_queue_drops=0` in every report during H4 and H6 |
-| HW-FR7-009 | Break | With no client, hold GPIO33 low for about 1 s through a resistor, then release it | `uart_breaks` above 0. Record whether `uart_rx_errors` also rises, which is Limitation 5 of the design | PENDING: needs a resistor from GPIO33 to GND. No retained log shows `uart_breaks` above 0 |
+| HW-FR7-009 | Break | With no client, hold GPIO33 low for about 1 s through a resistor, then release it | `uart_breaks` above 0. Record whether `uart_rx_errors` also rises, which is Limitation 5 of the design | **PASS** (E25): three breaks of 255 bit times (about 2.2 ms), sent on UART1 TX and looped to RX through the jumper instead of a resistor to GND. Each gave its own report with `uart_breaks=1` and `uart_rx_errors=0`, so a break did not also count as a frame error. `no_client_bytes=2` per break (the byte sent and the break's null byte), with `no data loss` |
 | HW-FR7-010 | Reporter stack | After HW-FR7-003 and HW-FR7-006, search the log for `Reporter stack:` | The lowest value is at least 512 bytes, so no `W` stack line | **PARTIAL**: lowest 2,028 bytes unused on `8d79dbe83` and `ce94f6077` (after H1 to H5, H9 and the FR-8 tests), and 1,932 on `1044bbf1b` after H6. All are above 512, including after HW-FR7-003 on `ce94f6077`. HW-FR7-006 has not run |
 | HW-FR7-011 | Firmware identity | Read the boot log | One `MAIN: Firmware:` line whose ELF SHA256 matches the flashed file | **PASS** (E9, E11): `MAIN: Firmware: version 63cbb71-dirty, ELF SHA256 ce94f6077`, matching the flashed ELF `ce94f607…aa533` |
 
@@ -80,6 +80,7 @@ Each test passes when its `LOSS:` lines show the values in the "Expected" column
 - the firmware identity line;
 - stalled-client loss counting (H6);
 - link loss with data in flight;
+- break detection;
 - the event queue keeping up during H4 and H6;
 - reporter stack margin.
 
@@ -90,7 +91,6 @@ On the PC, the host tests pass (FR-7 reporter at 200 ms, 62/0, and at the real 1
 | Test | What is missing | How to close it |
 |---|---|---|
 | HW-FR7-006 | Line errors | Needs a 3.3 V USB-UART adapter on GPIO33 |
-| HW-FR7-009 | Break | Needs a resistor from GPIO33 to GND |
 | HW-FR7-010 | Reporter stack after HW-FR7-006 | Read `Reporter stack:` after HW-FR7-006 |
 
 ### Evidence Sources
@@ -105,6 +105,7 @@ On the PC, the host tests pass (FR-7 reporter at 200 ms, 62/0, and at the real 1
 | E21 | Test report and serial log | [automated-test-results-h6-2026-11-05.md](../test-reports/automated-test-results-h6-2026-11-05.md) and [2026-11-05_h6_fwce94f6077.log](../evidence/2026-11-05_h6_fwce94f6077.log), firmware `ce94f6077`, H6 finished 2026-11-05T18:03:48Z | 5 of 5 passed. Same boot as E11, no reset since 09:27:36 |
 | E23 | Test report and serial log | [921600 report](../test-reports/automated-test-results-921600-2026-11-05.md) and [log](../evidence/2026-11-05_921600_fwc903d6e80.log), 921600 build of the current source | Supporting evidence, not a plan test. Real loss on the wire (H3 short by 9 bytes, H4 by 20) was detected and reported as `W LOSS: DATA LOSS: uart_rx_overflow=2` and `=1` |
 | E24 | Captured serial log | [2026-11-05_fr7-004_link-loss_fwae7ba8e58.log](../evidence/2026-11-05_fr7-004_link-loss_fwae7ba8e58.log), final firmware `7ffc134` / `ae7ba8e58`, 2026-11-05 14:56:46 to 15:01 | One boot, no `E`, panic or watchdog line. A continuous 60 s transfer session, with the cable pulled at 14:57:20 and the link restored 51.9 s later. On the client, that session ended with `write ECANCELED`, and the two sessions after recovery passed with matching SHA256 (622,080 bytes each) |
+| E25 | Captured serial log | [2026-11-05_fr7-009_break_diag-fw42e1853cf.log](../evidence/2026-11-05_fr7-009_break_diag-fw42e1853cf.log), diagnostic build `28f96fb` (branch `diag/fr7-break`, not merged), ELF `42e1853cfa2cfdad190824a9f099ababa87e75931cac613e379dd53ae123baa2` | One boot, no client. The build differs from `7ffc134` only by a task in `main.c` that sends three breaks on UART1 TX, which the jumper carries to RX. The detection and counting code is unchanged. `7ffc134` was flashed back afterwards and verified (ELF `ae7ba8e5…` in flash) |
 | E17 | Captured serial logs | `build/log/idf_py_stdout_output_48554`, `_5503` and `_10515`, firmware `1044bbf1b` (`0da27aa-dirty`, built 2026-11-03 11:22) | Built before the FR-7 commit `66840b3`, so its FR-7 source is not proven identical to the current one. Used as supporting evidence only |
 
 FR-7 code (`main/bridge/`, `main/uart/`) is unchanged between `63cbb71` and the current source, so R1 and E11 to E14 apply to it. The FR-5 change (`c726a91`) only replaces the hardcoded baud rate, with the same values at 115200.
