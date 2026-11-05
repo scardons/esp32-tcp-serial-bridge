@@ -1,0 +1,79 @@
+Command: /home/santiago/.espressif/python_env/idf6.1_py3.12_env/bin/python /home/santiago/esp/esp-idf/tools/idf_monitor.py -p /dev/ttyUSB1 -b 115200 --toolchain-prefix xtensa-esp32-elf- --target esp32 --revision 0 /home/santiago/esp/tcp_serial_bridge/build/tcp_serial_bridge.elf /home/santiago/esp/tcp_serial_bridge/build/bootloader/bootloader.elf -m '/home/santiago/.espressif/python_env/idf6.1_py3.12_env/bin/python' '/home/santiago/esp/esp-idf/tools/idf.py' '-p' '/dev/ttyUSB1'
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x12 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0040,len:6272
+load:0x40078000,len:15824
+load:0x40080400,len:3988
+entry 0x40080644
+[0;32mI (27) boot: ESP-IDF v6.1 2nd stage bootloader[0m
+[0;32mI (27) boot: compile time Oct 27 2026 12:59:12[0m
+[0;32mI (28) boot: Multicore bootloader[0m
+[0;32mI (29) boot: chip revision: v3.1[0m
+[0;32mI (31) boot.esp32: SPI Speed      : 40MHz[0m
+[0;32mI (35) boot.esp32: SPI Mode       : DIO[0m
+[0;32mI (39) boot.esp32: SPI Flash Size : 4MB[0m
+[0;32mI (42) boot: Enabling RNG early entropy source...[0m
+[0;32mI (47) boot: Partition Table:[0m
+[0;32mI (49) boot: ## Label            Usage          Type ST Offset   Length[0m
+[0;32mI (56) boot:  0 nvs              WiFi data        01 02 00009000 00006000[0m
+[0;32mI (62) boot:  1 phy_init         RF data          01 01 0000f000 00001000[0m
+[0;32mI (69) boot:  2 factory          factory app      00 00 00010000 00100000[0m
+[0;32mI (75) boot: End of partition table[0m
+[0;32mI (79) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=143f8h ( 82936) map[0m
+[0;32mI (116) esp_image: segment 1: paddr=00024420 vaddr=3ffb0000 size=02d0ch ( 11532) load[0m
+[0;32mI (120) esp_image: segment 2: paddr=00027134 vaddr=40080000 size=08ee4h ( 36580) load[0m
+[0;32mI (136) esp_image: segment 3: paddr=00030020 vaddr=400d0020 size=35040h (217152) map[0m
+[0;32mI (213) esp_image: segment 4: paddr=00065068 vaddr=40088ee4 size=03974h ( 14708) load[0m
+[0;32mI (220) esp_image: segment 5: paddr=000689e4 vaddr=50000000 size=00028h (    40) load[0m
+[0;32mI (226) boot: Loaded app from partition at offset 0x10000[0m
+[0;32mI (226) boot: Disabling RNG early entropy source...[0m
+[0;32mI (239) cpu_start: Multicore app[0m
+[0;32mI (247) cpu_start: GPIO 3 and 1 are used as console UART I/O pins[0m
+[0;32mI (247) cpu_start: Pro cpu start user code[0m
+[0;32mI (247) cpu_start: cpu freq: 160000000 Hz[0m
+[0;32mI (249) app_init: Application information:[0m
+[0;32mI (253) app_init: Project name:     tcp_serial_bridge[0m
+[0;32mI (258) app_init: App version:      63cbb71[0m
+[0;32mI (262) app_init: Compile time:     Nov  4 2026 10:08:58[0m
+[0;32mI (267) app_init: ELF file SHA256:  8d79dbe83...[0m
+[0;32mI (271) app_init: ESP-IDF:          v6.1[0m
+[0;32mI (275) efuse_init: Min chip rev:     v0.0[0m
+[0;32mI (279) efuse_init: Max chip rev:     v3.99 [0m
+[0;32mI (283) efuse_init: Chip rev:         v3.1[0m
+[0;32mI (287) heap_init: Initializing. RAM available for dynamic allocation:[0m
+[0;32mI (293) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM[0m
+[0;32mI (298) heap_init: At 3FFB4628 len 0002B9D8 (174 KiB): DRAM[0m
+[0;32mI (303) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM[0m
+[0;32mI (308) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM[0m
+[0;32mI (314) heap_init: At 4008C858 len 000137A8 (77 KiB): IRAM[0m
+[0;32mI (321) spi_flash: detected chip: generic[0m
+[0;32mI (323) spi_flash: flash io: dio[0m
+[0;32mI (328) main_task: Started on CPU0[0m
+[0;32mI (328) main_task: Calling app_main()[0m
+[0;32mI (328) MAIN: Firmware: version 63cbb71, ELF SHA256 8d79dbe83, built Nov  4 2026 10:08:58, ESP-IDF v6.1[0m
+[0;32mI (338) uart: queue free spaces: 128[0m
+[0;32mI (338) MAIN: UART1 initialized successfully[0m
+[0;32mI (878) NETWORK: Ethernet driver installed, PHY address 1[0m
+[0;32mI (878) esp_eth.netif.netif_glue: c0:cd:d6:61:ae:b3[0m
+[0;32mI (878) esp_eth.netif.netif_glue: ethernet attached to netif[0m
+[0;32mI (3078) NETWORK: Ethernet started[0m
+[0;32mI (3078) NETWORK: Ethernet link up: 100 Mbps, full duplex, MAC c0:cd:d6:61:ae:b3[0m
+[0;32mI (3078) esp_netif_handlers: eth ip: 192.168.1.200, mask: 255.255.255.0, gw: 192.168.1.1[0m
+[0;32mI (3078) NETWORK: TCP server listening on port 4001[0m
+[0;32mI (3078) NETWORK: IPv4 ready: 192.168.1.200, mask 255.255.255.0, gateway 192.168.1.1[0m
+[0;32mI (3078) main_task: Returned from app_main()[0m
+[0;32mI (10358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0[0m
+[0;32mI (10368) LOSS: Reporter stack: 2028 of 3072 bytes never used[0m
+[0;32mI (20358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0[0m
+[0;32mI (30358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0[0m
+[0;32mI (40358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0[0m
+[0;32mI (50358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0[0m
+[0;32mI (60358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0[0m
+[0;32mI (70358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0[0m
+[0;32mI (80358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0[0m
+[0;32mI (90358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0[0m
+[0;32mI (100358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0[0m

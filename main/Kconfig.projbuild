@@ -57,6 +57,20 @@ menu "TCP-Serial Bridge Configuration"
 
     endmenu
 
+    menu "UART Configuration"
+
+        config BRIDGE_UART_BAUD_RATE
+            int "UART1 baud rate"
+            range 9600 921600
+            default 115200
+            help
+                Baud rate of the bridge UART (UART1, TX GPIO32, RX GPIO33).
+                The frame format is fixed at 8N1 with no hardware flow
+                control. 115200 is the default. 921600 is the highest
+                supported rate.
+
+    endmenu
+
     menu "Diagnostics"
 
         config BRIDGE_UART_LOOPBACK_TEST

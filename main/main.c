@@ -177,7 +177,8 @@ static void run_uart_diagnostics(void)
 
     ESP_LOGI(
         TAG,
-        "TX: GPIO32 | RX: GPIO33 | Baud: 115200"
+        "TX: GPIO32 | RX: GPIO33 | Baud: %d",
+        UART_DRIVER_BAUD_RATE
     );
 
     /*
@@ -213,7 +214,8 @@ static esp_err_t start_bridge(void)
         return err;
     }
 
-    ESP_LOGI(TAG, "UART1 initialized successfully");
+    ESP_LOGI(TAG, "UART1 initialized successfully: %d baud, 8N1, no flow control",
+             UART_DRIVER_BAUD_RATE);
 
 #if CONFIG_BRIDGE_UART_LOOPBACK_TEST
     run_uart_diagnostics();

@@ -58,7 +58,9 @@
 // uart_driver_write() spins instead of sleeping when the TX ring buffer is full.
 // Estimating the bytes still queued keeps it well below capacity, so it never
 // spins, and unread TCP data slows the client down through its receive window.
-#define BRIDGE_UART_US_PER_BYTE       87            // 10 bits at 115200 baud
+// 10 bits per byte (8N1), rounded up: 87 us at 115200, 11 us at 921600.
+#define BRIDGE_UART_US_PER_BYTE \
+    ((10 * 1000000 + UART_DRIVER_BAUD_RATE - 1) / UART_DRIVER_BAUD_RATE)
 #define BRIDGE_UART_TX_MAX_BACKLOG_US (100 * 1000)
 
 typedef struct {

@@ -9,6 +9,7 @@
 | Tested by | Project operator |
 | Record prepared by | Claude Code, from retained logs |
 | Base commit | `78290c9`, with uncommitted changes (`78290c9-dirty`) |
+| Updated | 2026-11-05: H2 to H5 rerun on firmware `ce94f6077` with a retained report and serial log (HW-FR4-006 to 009) |
 
 ## Purpose and Scope
 
@@ -54,6 +55,13 @@ The E7 session shows no reset after boot, and no `task_wdt`, panic, backtrace or
 | HW-FR4-003 | H4 | Sustained 256,000-byte transfer | E7, timing only | PARTIAL |
 | HW-FR4-004 | H5 | No data from a previous session reaches a new client | E7, timing only | PARTIAL |
 | HW-FR4-005 | H6 | Client that stops reading is disconnected | E7 | PASS |
+| HW-FR4-006 | H2 | Text echo received by the client, firmware `ce94f6077` | E13, E14 | PASS |
+| HW-FR4-007 | H3 | Binary echo, all 256 byte values, firmware `ce94f6077` | E13, E14 | PASS |
+| HW-FR4-008 | H4 | Sustained 256,000-byte transfer, firmware `ce94f6077` | E13, E14 | PASS |
+| HW-FR4-009 | H5 | No data from a previous session reaches a new client, firmware `ce94f6077` | E13, E14 | PASS |
+| HW-FR4-010 | H6 | Client that stops reading is disconnected, firmware `ce94f6077` | [automated-test-results-h6-2026-11-05.md](../test-reports/automated-test-results-h6-2026-11-05.md), [2026-11-05_h6_fwce94f6077.log](../evidence/2026-11-05_h6_fwce94f6077.log) | PASS |
+
+HW-FR4-006 to 009 supersede the PARTIAL and NOT VERIFIED results of HW-FR4-001 to 004, which are kept for history. HW-FR4-010 reruns HW-FR4-005 (H6) on `ce94f6077`: `client stalled` 7.0 s after connecting, then a new client accepted.
 
 ### HW-FR4-001 to HW-FR4-003: Echo Tests (H2, H3, H4)
 
@@ -104,6 +112,38 @@ I (586796) NETWORK: TCP client connected: 192.168.1.170:58219
 I (610876) BRIDGE: TCP client closed: client stalled
 ```
 
+### HW-FR4-006 to HW-FR4-009: Rerun on Firmware `ce94f6077` (2026-11-05)
+
+**Firmware:** ELF SHA256 `ce94f60773ad9e775294d72253025f176b3bea90d52169b7e96e2383cf9aa533`, flashed and verified as recorded in [HW-VAL-009](hw-validation-fr9.md) (E9).
+
+| ID | Type | Source | Notes |
+|---|---|---|---|
+| E13 | Test report | [automated-test-results-2026-11-05.md](../test-reports/automated-test-results-2026-11-05.md), `npm test` finished 2026-11-05T17:17:00Z | 8 passed, 0 failed, H6 skipped. Its `Firmware` field reads "Not provided", because `BRIDGE_FIRMWARE` was not set; the firmware is identified by E14 |
+| E14 | Captured serial log | `fr9-h9-test.log`, 12:16:30 to 12:17:00 | The same boot as the flashed `ce94f6077`: no reset since 09:27:36. Preserved as [docs/evidence/2026-11-05_h9-and-npm-test_fwce94f6077.log](../evidence/2026-11-05_h9-and-npm-test_fwce94f6077.log) |
+
+**Results (E13):**
+
+| Test | Check | Result |
+|---|---|---|
+| H2 | The client receives a text line, and several messages in sequence, unchanged and in order | PASS |
+| H3 | The client receives all 20,480 bytes covering 0x00 to 0xFF, unchanged. SHA256 `a4759e7a…c22f` on both sides | PASS |
+| H4 | The client receives all 256,000 bytes unchanged and in order. SHA256 `319ec64c…9017` on both sides, 11,509 bytes/s | PASS |
+| H5 | The next client receives `0` bytes from the closed session, and its own session works | PASS |
+
+**Evidence (E14), H5.** The first client closes abruptly, a second is rejected while the first is still active, and the next one is accepted:
+
+```text
+2026-11-05 12:16:57 I (10159908) NETWORK: TCP client connected: 192.168.1.58:51082
+2026-11-05 12:16:57 W (10160218) NETWORK: TCP client 192.168.1.58:51084 rejected: a client is already connected
+2026-11-05 12:16:57 W (10160228) BRIDGE: TCP client send failed: errno 104
+2026-11-05 12:16:57 I (10160238) BRIDGE: TCP client closed: socket error
+2026-11-05 12:16:57 I (10160338) NETWORK: TCP client connected: 192.168.1.58:51086
+2026-11-05 12:16:57 W (10160368) LOSS: 10.0 s: DATA LOSS: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=1 tcp_tx_bytes=259 uart_tx_bytes=82 | expected: session_bytes=0 no_client_bytes=971 | ...
+2026-11-05 12:16:59 I (10162108) BRIDGE: TCP client closed: disconnected by peer
+```
+
+The `DATA LOSS` line is expected for H5 (see the README's Known Issues). The abrupt close leaves bytes in flight, and they are counted as lost rather than delivered to the next client. Only the isolation result decides H5, and the next client received 0 bytes.
+
 ## How to Run These Tests
 
 **Before you start**
@@ -132,12 +172,11 @@ The text must appear in the `nc` terminal unchanged.
 
 ## Status
 
-**FR-4: PARTIAL.** The stalled-client path was observed on hardware. Forwarded data integrity has no retained evidence.
+**FR-4: VALIDATED** (2026-11-05, firmware `ce94f6077`, through the loopback jumper at 115200 8N1). UART1 RX data reached the active client unchanged and in order, including every byte value and a 256,000-byte transfer, and none reached the next client after a session closed. The stalled-client path passed on `23f991546` (HW-FR4-005) and on `ce94f6077` (HW-FR4-010).
 
-## Limitations and Pending Validation
+## Limitations
 
-1. Terminal output for H2, H3, H4 and H5 is needed to confirm the delivered data.
-2. The match between sessions and tests is an inference from order and duration.
-3. UART data came only from the jumper. An independent serial device was not tested.
-4. UART data can be lost without notice if TCP stalls longer than the UART RX buffer can absorb, about 178 ms. The driver provides no overflow counter.
-5. The Ubuntu network path was not confirmed, and NAT buffering could affect HW-FR4-005 timing.
+1. UART data came only from the jumper, together with FR-3. An independent serial device was not tested (see "Testing FR-4 on its own").
+2. The E13 and H6 reports do not name the firmware. It is identified by the serial log of the same boot (E14).
+3. UART data is lost if TCP stalls longer than the UART RX buffer can absorb, about 178 ms. Since FR-7, that loss is counted and reported (`uart_rx_overflow`, `tcp_tx_bytes`), as the 2026-11-05 H6 run shows.
+4. For HW-FR4-005 the network path was not confirmed. For HW-FR4-010 the H6 path check found the ESP32 `on-link`, which is consistent with a direct link but does not prove it.

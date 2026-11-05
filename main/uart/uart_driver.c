@@ -14,7 +14,7 @@
 #define BRIDGE_UART_PORT       UART_NUM_1
 #define BRIDGE_UART_TX_PIN     32
 #define BRIDGE_UART_RX_PIN     33
-#define BRIDGE_UART_BAUD_RATE  115200
+#define BRIDGE_UART_BAUD_RATE  UART_DRIVER_BAUD_RATE
 
 // Frame errors are not in the driver's default interrupt set, so the driver
 // would never report them. Breaks are. Both are paused together when a faulty

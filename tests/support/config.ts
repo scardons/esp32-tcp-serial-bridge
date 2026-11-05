@@ -20,7 +20,8 @@ export const bridge = {
   connectTimeoutMs: positiveInteger('BRIDGE_CONNECT_TIMEOUT_MS', 3000),
 };
 
-export const BAUD_BYTES_PER_SECOND = 11520;
+/** UART1 rate in bytes per second, 10 bits per byte (8N1). Set BRIDGE_BAUD when the firmware uses another rate. */
+export const BAUD_BYTES_PER_SECOND = positiveInteger('BRIDGE_BAUD', 115200) / 10;
 
 /** Also read by the report: these failures mean that nothing could be tested. */
 export const BLOCKED_PREFIX = 'BLOCKED:';

@@ -9,6 +9,7 @@
 | Record prepared by | Claude Code, from project history and retained logs |
 | Base commit | `25847e6`, with uncommitted changes (`25847e6-dirty`) |
 | Updated | 2026-11-02, adding evidence from the bridge firmware `23f991546` (base `78290c9-dirty`) |
+| Updated | 2026-11-05, adding HW-FR1-009 (H9, firmware `ce94f6077`) and HW-FR1-010 (216 s outage, firmware `23f991546`) |
 
 ## 1. Purpose and Scope
 
@@ -105,6 +106,8 @@ idf.py -p /dev/ttyUSB1 monitor
 | HW-FR1-006 | Static IP recovered after link restoration | E6 | PASS, with the evidence limitation below |
 | HW-FR1-007 | Boot regression on the bridge firmware | E7 | PASS |
 | HW-FR1-008 | Static IP recovered after a 66 s outage, with serial evidence | E7 | PASS |
+| HW-FR1-009 | Static IP, mask and gateway restored after 9 outages of 4.0 s to 109.9 s, firmware `ce94f6077` | [HW-VAL-009](hw-validation-fr9.md) E11 | PASS (9 of 9, with `Static IP restored after link recovery (#n)` and no `does not match the static configuration`) |
+| HW-FR1-010 | Static IP restored after a 216 s outage, past the 120 s ESP-NETIF lost-IP timer | [2026-11-02_h8_fw23f991546.log](../evidence/2026-11-02_h8_fw23f991546.log) | PASS |
 
 ### HW-FR1-001: Ethernet Initialization
 
@@ -285,7 +288,7 @@ grep -E "Ethernet (started|link)|IPv4 ready|Static IP|does not match|rst:|Guru|p
 
 | Requirement | Status | Basis |
 |---|---|---|
-| FR-1 | **PASS — Hardware Validated** | HW-FR1-001 to HW-FR1-008 |
+| FR-1 | **PASS — Hardware Validated** | HW-FR1-001 to HW-FR1-010 |
 | FR-8 | Partially validated, **not complete** | See `hw-validation-fr8.md` |
 
 ## 7. Known Limitations

@@ -175,6 +175,7 @@ The bridge firmware moved the client socket from the server task to the bridge t
 | HW-FR2-011 | Client A disconnects | `disconnected by peer` | Logged | PASS |
 | HW-FR2-012 | Client B reconnects without a restart | New connection accepted | Port 56058 connected. No reset in the session | PASS |
 | HW-FR2-013 | Rejection and recovery during a rapid reconnection (H5) | Rejected while busy, accepted afterwards | Port 60088 rejected, port 60090 accepted about 120 ms later | PASS |
+| HW-FR2-014 | H1 on firmware `ce94f6077` (2026-11-05) | Client accepted, second client rejected, slot released | 3 of 3 H1 tests passed ([E13](../test-reports/automated-test-results-2026-11-05.md)), reconnect in 258 ms | PASS |
 
 **Evidence (E7)**
 
@@ -228,7 +229,7 @@ Before the FR-2 tests, a connection to port 4001 returned `Connection refused`. 
 
 | Requirement | Status | Basis |
 |---|---|---|
-| FR-2 | **PASS — Hardware Validated** | HW-FR2-001 to HW-FR2-013 |
+| FR-2 | **PASS — Hardware Validated** | HW-FR2-001 to HW-FR2-014 |
 | FR-3 | PARTIAL | See `hw-validation-fr3.md` |
 | FR-4 | PARTIAL | See `hw-validation-fr4.md` |
 | FR-5 | Pending | See `hw-validation-fr5.md` |

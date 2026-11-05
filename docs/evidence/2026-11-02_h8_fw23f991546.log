@@ -1,0 +1,582 @@
+Command: /home/santiago/.espressif/python_env/idf6.1_py3.12_env/bin/python /home/santiago/esp/esp-idf/tools/idf_monitor.py -p /dev/ttyUSB1 -b 115200 --toolchain-prefix xtensa-esp32-elf- --target esp32 --revision 0 /home/santiago/esp/tcp_serial_bridge/build/tcp_serial_bridge.elf /home/santiago/esp/tcp_serial_bridge/build/bootloader/bootloader.elf -m '/home/santiago/.espressif/python_env/idf6.1_py3.12_env/bin/python' '/home/santiago/esp/esp-idf/tools/idf.py' '-p' '/dev/ttyUSB1'
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x12 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0040,len:6272
+load:0x40078000,len:15824
+load:0x40080400,len:3988
+entry 0x40080644
+[0;32mI (27) boot: ESP-IDF v6.1 2nd stage bootloader[0m
+[0;32mI (27) boot: compile time Oct 27 2026 12:59:12[0m
+[0;32mI (28) boot: Multicore bootloader[0m
+[0;32mI (29) boot: chip revision: v3.1[0m
+[0;32mI (31) boot.esp32: SPI Speed      : 40MHz[0m
+[0;32mI (35) boot.esp32: SPI Mode       : DIO[0m
+[0;32mI (39) boot.esp32: SPI Flash Size : 4MB[0m
+[0;32mI (42) boot: Enabling RNG early entropy source...[0m
+[0;32mI (47) boot: Partition Table:[0m
+[0;32mI (49) boot: ## Label            Usage          Type ST Offset   Length[0m
+[0;32mI (56) boot:  0 nvs              WiFi data        01 02 00009000 00006000[0m
+[0;32mI (62) boot:  1 phy_init         RF data          01 01 0000f000 00001000[0m
+[0;32mI (69) boot:  2 factory          factory app      00 00 00010000 00100000[0m
+[0;32mI (75) boot: End of partition table[0m
+[0;32mI (79) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=13e60h ( 81504) map[0m
+[0;32mI (115) esp_image: segment 1: paddr=00023e88 vaddr=3ffb0000 size=02cbch ( 11452) load[0m
+[0;32mI (120) esp_image: segment 2: paddr=00026b4c vaddr=40080000 size=094cch ( 38092) load[0m
+[0;32mI (136) esp_image: segment 3: paddr=00030020 vaddr=400d0020 size=33cb4h (212148) map[0m
+[0;32mI (212) esp_image: segment 4: paddr=00063cdc vaddr=400894cc size=032f8h ( 13048) load[0m
+[0;32mI (217) esp_image: segment 5: paddr=00066fdc vaddr=50000000 size=00028h (    40) load[0m
+[0;32mI (224) boot: Loaded app from partition at offset 0x10000[0m
+[0;32mI (224) boot: Disabling RNG early entropy source...[0m
+[0;32mI (237) cpu_start: Multicore app[0m
+[0;32mI (245) cpu_start: GPIO 3 and 1 are used as console UART I/O pins[0m
+[0;32mI (246) cpu_start: Pro cpu start user code[0m
+[0;32mI (246) cpu_start: cpu freq: 160000000 Hz[0m
+[0;32mI (248) app_init: Application information:[0m
+[0;32mI (251) app_init: Project name:     tcp_serial_bridge[0m
+[0;32mI (256) app_init: App version:      78290c9-dirty[0m
+[0;32mI (261) app_init: Compile time:     Nov  2 2026 13:25:46[0m
+[0;32mI (266) app_init: ELF file SHA256:  23f991546...[0m
+[0;32mI (270) app_init: ESP-IDF:          v6.1[0m
+[0;32mI (274) efuse_init: Min chip rev:     v0.0[0m
+[0;32mI (277) efuse_init: Max chip rev:     v3.99 [0m
+[0;32mI (281) efuse_init: Chip rev:         v3.1[0m
+[0;32mI (286) heap_init: Initializing. RAM available for dynamic allocation:[0m
+[0;32mI (292) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM[0m
+[0;32mI (297) heap_init: At 3FFB4408 len 0002BBF8 (174 KiB): DRAM[0m
+[0;32mI (302) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM[0m
+[0;32mI (307) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM[0m
+[0;32mI (313) heap_init: At 4008C7C4 len 0001383C (78 KiB): IRAM[0m
+[0;32mI (320) spi_flash: detected chip: generic[0m
+[0;32mI (322) spi_flash: flash io: dio[0m
+[0;32mI (326) main_task: Started on CPU0[0m
+[0;32mI (326) main_task: Calling app_main()[0m
+[0;32mI (326) MAIN: UART1 initialized successfully[0m
+[0;32mI (876) NETWORK: Ethernet driver installed, PHY address 1[0m
+[0;32mI (876) esp_eth.netif.netif_glue: c0:cd:d6:61:ae:b3[0m
+[0;32mI (876) esp_eth.netif.netif_glue: ethernet attached to netif[0m
+[0;32mI (3376) NETWORK: Ethernet started[0m
+[0;32mI (3376) main_task: Returned from app_main()[0m
+[0;32mI (3376) NETWORK: Ethernet link up: 100 Mbps, full duplex, MAC c0:cd:d6:61:ae:b3[0m
+[0;32mI (3376) NETWORK: TCP server listening on port 4001[0m
+[0;32mI (3376) esp_netif_handlers: eth ip: 192.168.1.200, mask: 255.255.255.0, gw: 192.168.1.1[0m
+[0;32mI (3386) NETWORK: IPv4 ready: 192.168.1.200, mask 255.255.255.0, gateway 192.168.1.1[0m
+[0;32mI (28106) NETWORK: TCP client connected: 192.168.1.170:51117[0m
+[0;32mI (84316) BRIDGE: TCP client closed: disconnected by peer[0m
+[0;33mW (105376) NETWORK: Ethernet link down[0m
+[0;32mI (321376) NETWORK: Ethernet link up: 100 Mbps, full duplex, MAC c0:cd:d6:61:ae:b3[0m
+[0;32mI (321376) esp_netif_handlers: eth ip: 192.168.1.200, mask: 255.255.255.0, gw: 192.168.1.1[0m
+[0;32mI (321376) NETWORK: IPv4 ready: 192.168.1.200, mask 255.255.255.0, gateway 192.168.1.1[0m
+[0;32mI (344036) NETWORK: TCP client connected: 192.168.1.170:61171[0m
+[0;33mW (1739816) NETWORK: TCP client 192.168.1.170:58422 rejected: a client is already connected[0m
+[0;33mW (2075866) NETWORK: TCP client 192.168.1.170:63743 rejected: a client is already connected[0m
+[0;33mW (2075876) NETWORK: TCP client 192.168.1.170:63744 rejected: a client is already connected[0m
+[0;33mW (2075986) NETWORK: TCP client 192.168.1.170:63745 rejected: a client is already connected[0m
+[0;33mW (2076106) NETWORK: TCP client 192.168.1.170:63746 rejected: a client is already connected[0m
+[0;33mW (2076216) NETWORK: TCP client 192.168.1.170:63747 rejected: a client is already connected[0m
+[0;33mW (2076326) NETWORK: TCP client 192.168.1.170:63748 rejected: a client is already connected[0m
+[0;33mW (2076446) NETWORK: TCP client 192.168.1.170:63749 rejected: a client is already connected[0m
+[0;33mW (2076556) NETWORK: TCP client 192.168.1.170:63750 rejected: a client is already connected[0m
+[0;33mW (2076676) NETWORK: TCP client 192.168.1.170:63751 rejected: a client is already connected[0m
+[0;33mW (2076796) NETWORK: TCP client 192.168.1.170:63752 rejected: a client is already connected[0m
+[0;33mW (2076906) NETWORK: TCP client 192.168.1.170:63753 rejected: a client is already connected[0m
+[0;33mW (2077026) NETWORK: TCP client 192.168.1.170:63754 rejected: a client is already connected[0m
+[0;33mW (2077136) NETWORK: TCP client 192.168.1.170:63755 rejected: a client is already connected[0m
+[0;33mW (2077246) NETWORK: TCP client 192.168.1.170:63756 rejected: a client is already connected[0m
+[0;33mW (2077356) NETWORK: TCP client 192.168.1.170:63757 rejected: a client is already connected[0m
+[0;33mW (2077476) NETWORK: TCP client 192.168.1.170:63758 rejected: a client is already connected[0m
+[0;33mW (2077586) NETWORK: TCP client 192.168.1.170:63759 rejected: a client is already connected[0m
+[0;33mW (2077706) NETWORK: TCP client 192.168.1.170:63760 rejected: a client is already connected[0m
+[0;33mW (2077816) NETWORK: TCP client 192.168.1.170:63761 rejected: a client is already connected[0m
+[0;33mW (2077936) NETWORK: TCP client 192.168.1.170:63762 rejected: a client is already connected[0m
+[0;33mW (2078056) NETWORK: TCP client 192.168.1.170:63763 rejected: a client is already connected[0m
+[0;33mW (2078166) NETWORK: TCP client 192.168.1.170:63764 rejected: a client is already connected[0m
+[0;33mW (2078286) NETWORK: TCP client 192.168.1.170:63765 rejected: a client is already connected[0m
+[0;33mW (2078406) NETWORK: TCP client 192.168.1.170:63766 rejected: a client is already connected[0m
+[0;33mW (2078516) NETWORK: TCP client 192.168.1.170:63767 rejected: a client is already connected[0m
+[0;33mW (2078636) NETWORK: TCP client 192.168.1.170:63768 rejected: a client is already connected[0m
+[0;33mW (2078746) NETWORK: TCP client 192.168.1.170:63769 rejected: a client is already connected[0m
+[0;33mW (2078866) NETWORK: TCP client 192.168.1.170:63770 rejected: a client is already connected[0m
+[0;33mW (2078976) NETWORK: TCP client 192.168.1.170:63771 rejected: a client is already connected[0m
+[0;33mW (2079096) NETWORK: TCP client 192.168.1.170:63772 rejected: a client is already connected[0m
+[0;33mW (2079206) NETWORK: TCP client 192.168.1.170:63773 rejected: a client is already connected[0m
+[0;33mW (2079326) NETWORK: TCP client 192.168.1.170:63774 rejected: a client is already connected[0m
+[0;33mW (2079436) NETWORK: TCP client 192.168.1.170:63775 rejected: a client is already connected[0m
+[0;33mW (2079556) NETWORK: TCP client 192.168.1.170:63776 rejected: a client is already connected[0m
+[0;33mW (2079666) NETWORK: TCP client 192.168.1.170:63777 rejected: a client is already connected[0m
+[0;33mW (2079796) NETWORK: TCP client 192.168.1.170:63778 rejected: a client is already connected[0m
+[0;33mW (2079906) NETWORK: TCP client 192.168.1.170:63779 rejected: a client is already connected[0m
+[0;33mW (2080016) NETWORK: TCP client 192.168.1.170:63780 rejected: a client is already connected[0m
+[0;33mW (2080136) NETWORK: TCP client 192.168.1.170:63781 rejected: a client is already connected[0m
+[0;33mW (2080246) NETWORK: TCP client 192.168.1.170:63782 rejected: a client is already connected[0m
+[0;33mW (2080366) NETWORK: TCP client 192.168.1.170:63783 rejected: a client is already connected[0m
+[0;33mW (2080476) NETWORK: TCP client 192.168.1.170:54301 rejected: a client is already connected[0m
+[0;33mW (2080596) NETWORK: TCP client 192.168.1.170:54303 rejected: a client is already connected[0m
+[0;33mW (2080716) NETWORK: TCP client 192.168.1.170:54304 rejected: a client is already connected[0m
+[0;33mW (2080836) NETWORK: TCP client 192.168.1.170:54308 rejected: a client is already connected[0m
+[0;33mW (2081016) NETWORK: TCP client 192.168.1.170:54313 rejected: a client is already connected[0m
+[0;33mW (2081036) NETWORK: TCP client 192.168.1.170:54314 rejected: a client is already connected[0m
+[0;33mW (2081156) NETWORK: TCP client 192.168.1.170:54315 rejected: a client is already connected[0m
+[0;33mW (2081266) NETWORK: TCP client 192.168.1.170:54316 rejected: a client is already connected[0m
+[0;33mW (2081376) NETWORK: TCP client 192.168.1.170:54317 rejected: a client is already connected[0m
+[0;33mW (2081496) NETWORK: TCP client 192.168.1.170:54318 rejected: a client is already connected[0m
+[0;33mW (2081616) NETWORK: TCP client 192.168.1.170:54319 rejected: a client is already connected[0m
+[0;33mW (2081726) NETWORK: TCP client 192.168.1.170:54320 rejected: a client is already connected[0m
+[0;33mW (2081836) NETWORK: TCP client 192.168.1.170:54321 rejected: a client is already connected[0m
+[0;33mW (2081956) NETWORK: TCP client 192.168.1.170:54322 rejected: a client is already connected[0m
+[0;33mW (2082066) NETWORK: TCP client 192.168.1.170:54323 rejected: a client is already connected[0m
+[0;33mW (2082186) NETWORK: TCP client 192.168.1.170:54324 rejected: a client is already connected[0m
+[0;33mW (2082296) NETWORK: TCP client 192.168.1.170:54325 rejected: a client is already connected[0m
+[0;33mW (2082406) NETWORK: TCP client 192.168.1.170:54326 rejected: a client is already connected[0m
+[0;33mW (2082526) NETWORK: TCP client 192.168.1.170:54327 rejected: a client is already connected[0m
+[0;33mW (2082636) NETWORK: TCP client 192.168.1.170:54328 rejected: a client is already connected[0m
+[0;33mW (2082756) NETWORK: TCP client 192.168.1.170:54329 rejected: a client is already connected[0m
+[0;33mW (2082876) NETWORK: TCP client 192.168.1.170:54330 rejected: a client is already connected[0m
+[0;33mW (2082996) NETWORK: TCP client 192.168.1.170:54333 rejected: a client is already connected[0m
+[0;33mW (2083106) NETWORK: TCP client 192.168.1.170:54334 rejected: a client is already connected[0m
+[0;33mW (2083226) NETWORK: TCP client 192.168.1.170:54335 rejected: a client is already connected[0m
+[0;33mW (2083346) NETWORK: TCP client 192.168.1.170:54336 rejected: a client is already connected[0m
+[0;33mW (2083456) NETWORK: TCP client 192.168.1.170:58569 rejected: a client is already connected[0m
+[0;33mW (2083566) NETWORK: TCP client 192.168.1.170:58572 rejected: a client is already connected[0m
+[0;33mW (2083686) NETWORK: TCP client 192.168.1.170:58573 rejected: a client is already connected[0m
+[0;33mW (2083806) NETWORK: TCP client 192.168.1.170:58575 rejected: a client is already connected[0m
+[0;33mW (2083916) NETWORK: TCP client 192.168.1.170:58576 rejected: a client is already connected[0m
+[0;33mW (2084036) NETWORK: TCP client 192.168.1.170:58577 rejected: a client is already connected[0m
+[0;33mW (2084146) NETWORK: TCP client 192.168.1.170:58578 rejected: a client is already connected[0m
+[0;33mW (2084276) NETWORK: TCP client 192.168.1.170:58579 rejected: a client is already connected[0m
+[0;33mW (2084396) NETWORK: TCP client 192.168.1.170:58580 rejected: a client is already connected[0m
+[0;33mW (2084526) NETWORK: TCP client 192.168.1.170:58581 rejected: a client is already connected[0m
+[0;33mW (2084636) NETWORK: TCP client 192.168.1.170:58582 rejected: a client is already connected[0m
+[0;33mW (2084756) NETWORK: TCP client 192.168.1.170:58583 rejected: a client is already connected[0m
+[0;33mW (2084876) NETWORK: TCP client 192.168.1.170:58584 rejected: a client is already connected[0m
+[0;33mW (2084986) NETWORK: TCP client 192.168.1.170:58585 rejected: a client is already connected[0m
+[0;33mW (2085106) NETWORK: TCP client 192.168.1.170:58586 rejected: a client is already connected[0m
+[0;33mW (2085216) NETWORK: TCP client 192.168.1.170:58587 rejected: a client is already connected[0m
+[0;33mW (2085326) NETWORK: TCP client 192.168.1.170:58588 rejected: a client is already connected[0m
+[0;33mW (2085446) NETWORK: TCP client 192.168.1.170:59899 rejected: a client is already connected[0m
+[0;33mW (2085566) NETWORK: TCP client 192.168.1.170:59900 rejected: a client is already connected[0m
+[0;33mW (2085676) NETWORK: TCP client 192.168.1.170:59901 rejected: a client is already connected[0m
+[0;33mW (2085786) NETWORK: TCP client 192.168.1.170:59902 rejected: a client is already connected[0m
+[0;33mW (2085896) NETWORK: TCP client 192.168.1.170:59903 rejected: a client is already connected[0m
+[0;33mW (2086016) NETWORK: TCP client 192.168.1.170:59904 rejected: a client is already connected[0m
+[0;33mW (2086146) NETWORK: TCP client 192.168.1.170:59905 rejected: a client is already connected[0m
+[0;33mW (2086166) NETWORK: TCP client 192.168.1.170:59906 rejected: a client is already connected[0m
+[0;33mW (2086286) NETWORK: TCP client 192.168.1.170:59907 rejected: a client is already connected[0m
+[0;33mW (2086396) NETWORK: TCP client 192.168.1.170:59908 rejected: a client is already connected[0m
+[0;33mW (2086516) NETWORK: TCP client 192.168.1.170:59909 rejected: a client is already connected[0m
+[0;33mW (2086626) NETWORK: TCP client 192.168.1.170:59910 rejected: a client is already connected[0m
+[0;33mW (2086746) NETWORK: TCP client 192.168.1.170:59911 rejected: a client is already connected[0m
+[0;33mW (2086856) NETWORK: TCP client 192.168.1.170:59912 rejected: a client is already connected[0m
+[0;33mW (2086976) NETWORK: TCP client 192.168.1.170:59913 rejected: a client is already connected[0m
+[0;33mW (2087096) NETWORK: TCP client 192.168.1.170:59914 rejected: a client is already connected[0m
+[0;33mW (2087206) NETWORK: TCP client 192.168.1.170:59915 rejected: a client is already connected[0m
+[0;33mW (2087326) NETWORK: TCP client 192.168.1.170:59916 rejected: a client is already connected[0m
+[0;33mW (2087436) NETWORK: TCP client 192.168.1.170:59917 rejected: a client is already connected[0m
+[0;33mW (2087556) NETWORK: TCP client 192.168.1.170:59918 rejected: a client is already connected[0m
+[0;33mW (2087696) NETWORK: TCP client 192.168.1.170:59919 rejected: a client is already connected[0m
+[0;33mW (2087816) NETWORK: TCP client 192.168.1.170:59920 rejected: a client is already connected[0m
+[0;33mW (2087936) NETWORK: TCP client 192.168.1.170:59921 rejected: a client is already connected[0m
+[0;33mW (2088046) NETWORK: TCP client 192.168.1.170:59922 rejected: a client is already connected[0m
+[0;33mW (2088156) NETWORK: TCP client 192.168.1.170:59923 rejected: a client is already connected[0m
+[0;33mW (2088276) NETWORK: TCP client 192.168.1.170:59924 rejected: a client is already connected[0m
+[0;33mW (2088386) NETWORK: TCP client 192.168.1.170:59925 rejected: a client is already connected[0m
+[0;33mW (2088496) NETWORK: TCP client 192.168.1.170:59926 rejected: a client is already connected[0m
+[0;33mW (2088616) NETWORK: TCP client 192.168.1.170:59927 rejected: a client is already connected[0m
+[0;33mW (2088736) NETWORK: TCP client 192.168.1.170:59928 rejected: a client is already connected[0m
+[0;33mW (2088846) NETWORK: TCP client 192.168.1.170:59929 rejected: a client is already connected[0m
+[0;33mW (2088956) NETWORK: TCP client 192.168.1.170:59930 rejected: a client is already connected[0m
+[0;33mW (2089076) NETWORK: TCP client 192.168.1.170:59931 rejected: a client is already connected[0m
+[0;33mW (2089186) NETWORK: TCP client 192.168.1.170:59932 rejected: a client is already connected[0m
+[0;33mW (2089306) NETWORK: TCP client 192.168.1.170:59933 rejected: a client is already connected[0m
+[0;33mW (2089416) NETWORK: TCP client 192.168.1.170:59934 rejected: a client is already connected[0m
+[0;33mW (2089526) NETWORK: TCP client 192.168.1.170:59935 rejected: a client is already connected[0m
+[0;33mW (2089636) NETWORK: TCP client 192.168.1.170:59936 rejected: a client is already connected[0m
+[0;33mW (2089756) NETWORK: TCP client 192.168.1.170:59937 rejected: a client is already connected[0m
+[0;33mW (2089866) NETWORK: TCP client 192.168.1.170:59938 rejected: a client is already connected[0m
+[0;33mW (2089986) NETWORK: TCP client 192.168.1.170:59939 rejected: a client is already connected[0m
+[0;33mW (2090096) NETWORK: TCP client 192.168.1.170:59940 rejected: a client is already connected[0m
+[0;33mW (2090206) NETWORK: TCP client 192.168.1.170:59941 rejected: a client is already connected[0m
+[0;33mW (2090326) NETWORK: TCP client 192.168.1.170:59942 rejected: a client is already connected[0m
+[0;33mW (2090436) NETWORK: TCP client 192.168.1.170:59943 rejected: a client is already connected[0m
+[0;33mW (2090556) NETWORK: TCP client 192.168.1.170:59944 rejected: a client is already connected[0m
+[0;33mW (2090666) NETWORK: TCP client 192.168.1.170:59945 rejected: a client is already connected[0m
+[0;33mW (2090786) NETWORK: TCP client 192.168.1.170:59946 rejected: a client is already connected[0m
+[0;33mW (2090896) NETWORK: TCP client 192.168.1.170:59947 rejected: a client is already connected[0m
+[0;33mW (2091016) NETWORK: TCP client 192.168.1.170:59952 rejected: a client is already connected[0m
+[0;33mW (2091126) NETWORK: TCP client 192.168.1.170:59953 rejected: a client is already connected[0m
+[0;33mW (2091236) NETWORK: TCP client 192.168.1.170:59954 rejected: a client is already connected[0m
+[0;33mW (2091366) NETWORK: TCP client 192.168.1.170:59955 rejected: a client is already connected[0m
+[0;33mW (2091506) NETWORK: TCP client 192.168.1.170:59956 rejected: a client is already connected[0m
+[0;33mW (2091636) NETWORK: TCP client 192.168.1.170:59957 rejected: a client is already connected[0m
+[0;33mW (2091776) NETWORK: TCP client 192.168.1.170:59961 rejected: a client is already connected[0m
+[0;33mW (2091916) NETWORK: TCP client 192.168.1.170:59962 rejected: a client is already connected[0m
+[0;33mW (2092036) NETWORK: TCP client 192.168.1.170:59963 rejected: a client is already connected[0m
+[0;33mW (2092146) NETWORK: TCP client 192.168.1.170:59964 rejected: a client is already connected[0m
+[0;33mW (2092276) NETWORK: TCP client 192.168.1.170:59965 rejected: a client is already connected[0m
+[0;33mW (2092416) NETWORK: TCP client 192.168.1.170:59966 rejected: a client is already connected[0m
+[0;33mW (2092546) NETWORK: TCP client 192.168.1.170:59967 rejected: a client is already connected[0m
+[0;33mW (2092686) NETWORK: TCP client 192.168.1.170:59968 rejected: a client is already connected[0m
+[0;33mW (2092816) NETWORK: TCP client 192.168.1.170:59969 rejected: a client is already connected[0m
+[0;33mW (2092956) NETWORK: TCP client 192.168.1.170:59970 rejected: a client is already connected[0m
+[0;33mW (2093086) NETWORK: TCP client 192.168.1.170:59972 rejected: a client is already connected[0m
+[0;33mW (2093216) NETWORK: TCP client 192.168.1.170:59973 rejected: a client is already connected[0m
+[0;33mW (2093326) NETWORK: TCP client 192.168.1.170:59974 rejected: a client is already connected[0m
+[0;33mW (2093506) NETWORK: TCP client 192.168.1.170:64199 rejected: a client is already connected[0m
+[0;33mW (2093626) NETWORK: TCP client 192.168.1.170:64201 rejected: a client is already connected[0m
+[0;33mW (2093736) NETWORK: TCP client 192.168.1.170:64202 rejected: a client is already connected[0m
+[0;33mW (2093846) NETWORK: TCP client 192.168.1.170:55845 rejected: a client is already connected[0m
+[0;33mW (2093956) NETWORK: TCP client 192.168.1.170:55846 rejected: a client is already connected[0m
+[0;33mW (2094076) NETWORK: TCP client 192.168.1.170:55847 rejected: a client is already connected[0m
+[0;33mW (2094186) NETWORK: TCP client 192.168.1.170:55848 rejected: a client is already connected[0m
+[0;33mW (2094306) NETWORK: TCP client 192.168.1.170:55851 rejected: a client is already connected[0m
+[0;33mW (2094416) NETWORK: TCP client 192.168.1.170:55852 rejected: a client is already connected[0m
+[0;33mW (2094526) NETWORK: TCP client 192.168.1.170:55853 rejected: a client is already connected[0m
+[0;33mW (2094636) NETWORK: TCP client 192.168.1.170:55854 rejected: a client is already connected[0m
+[0;33mW (2094756) NETWORK: TCP client 192.168.1.170:55855 rejected: a client is already connected[0m
+[0;33mW (2094866) NETWORK: TCP client 192.168.1.170:55856 rejected: a client is already connected[0m
+[0;33mW (2094986) NETWORK: TCP client 192.168.1.170:55861 rejected: a client is already connected[0m
+[0;33mW (2095096) NETWORK: TCP client 192.168.1.170:55862 rejected: a client is already connected[0m
+[0;33mW (2095216) NETWORK: TCP client 192.168.1.170:55863 rejected: a client is already connected[0m
+[0;33mW (2095336) NETWORK: TCP client 192.168.1.170:55864 rejected: a client is already connected[0m
+[0;33mW (2095456) NETWORK: TCP client 192.168.1.170:55865 rejected: a client is already connected[0m
+[0;33mW (2095566) NETWORK: TCP client 192.168.1.170:55866 rejected: a client is already connected[0m
+[0;33mW (2095676) NETWORK: TCP client 192.168.1.170:55867 rejected: a client is already connected[0m
+[0;33mW (2095806) NETWORK: TCP client 192.168.1.170:55868 rejected: a client is already connected[0m
+[0;33mW (2095916) NETWORK: TCP client 192.168.1.170:55869 rejected: a client is already connected[0m
+[0;33mW (2096036) NETWORK: TCP client 192.168.1.170:55870 rejected: a client is already connected[0m
+[0;33mW (2096146) NETWORK: TCP client 192.168.1.170:55872 rejected: a client is already connected[0m
+[0;33mW (2096266) NETWORK: TCP client 192.168.1.170:55873 rejected: a client is already connected[0m
+[0;33mW (2096386) NETWORK: TCP client 192.168.1.170:55874 rejected: a client is already connected[0m
+[0;33mW (2096496) NETWORK: TCP client 192.168.1.170:55875 rejected: a client is already connected[0m
+[0;33mW (2096606) NETWORK: TCP client 192.168.1.170:55876 rejected: a client is already connected[0m
+[0;33mW (2096726) NETWORK: TCP client 192.168.1.170:55877 rejected: a client is already connected[0m
+[0;33mW (2096836) NETWORK: TCP client 192.168.1.170:55878 rejected: a client is already connected[0m
+[0;33mW (2096956) NETWORK: TCP client 192.168.1.170:55879 rejected: a client is already connected[0m
+[0;33mW (2097076) NETWORK: TCP client 192.168.1.170:55880 rejected: a client is already connected[0m
+[0;33mW (2097186) NETWORK: TCP client 192.168.1.170:55881 rejected: a client is already connected[0m
+[0;33mW (2097296) NETWORK: TCP client 192.168.1.170:55882 rejected: a client is already connected[0m
+[0;33mW (2097416) NETWORK: TCP client 192.168.1.170:55883 rejected: a client is already connected[0m
+[0;33mW (2097536) NETWORK: TCP client 192.168.1.170:55884 rejected: a client is already connected[0m
+[0;33mW (2097656) NETWORK: TCP client 192.168.1.170:55885 rejected: a client is already connected[0m
+[0;33mW (2097766) NETWORK: TCP client 192.168.1.170:55886 rejected: a client is already connected[0m
+[0;33mW (2097886) NETWORK: TCP client 192.168.1.170:55887 rejected: a client is already connected[0m
+[0;33mW (2098006) NETWORK: TCP client 192.168.1.170:55888 rejected: a client is already connected[0m
+[0;33mW (2098126) NETWORK: TCP client 192.168.1.170:55889 rejected: a client is already connected[0m
+[0;33mW (2098236) NETWORK: TCP client 192.168.1.170:55890 rejected: a client is already connected[0m
+[0;33mW (2098346) NETWORK: TCP client 192.168.1.170:55891 rejected: a client is already connected[0m
+[0;33mW (2098466) NETWORK: TCP client 192.168.1.170:55892 rejected: a client is already connected[0m
+[0;33mW (2098586) NETWORK: TCP client 192.168.1.170:55893 rejected: a client is already connected[0m
+[0;33mW (2098696) NETWORK: TCP client 192.168.1.170:55894 rejected: a client is already connected[0m
+[0;33mW (2098806) NETWORK: TCP client 192.168.1.170:55895 rejected: a client is already connected[0m
+[0;33mW (2098916) NETWORK: TCP client 192.168.1.170:55896 rejected: a client is already connected[0m
+[0;33mW (2099026) NETWORK: TCP client 192.168.1.170:55897 rejected: a client is already connected[0m
+[0;33mW (2099146) NETWORK: TCP client 192.168.1.170:55898 rejected: a client is already connected[0m
+[0;33mW (2099256) NETWORK: TCP client 192.168.1.170:55899 rejected: a client is already connected[0m
+[0;33mW (2099376) NETWORK: TCP client 192.168.1.170:55900 rejected: a client is already connected[0m
+[0;33mW (2099486) NETWORK: TCP client 192.168.1.170:55901 rejected: a client is already connected[0m
+[0;33mW (2099596) NETWORK: TCP client 192.168.1.170:55902 rejected: a client is already connected[0m
+[0;33mW (2099716) NETWORK: TCP client 192.168.1.170:55903 rejected: a client is already connected[0m
+[0;33mW (2099826) NETWORK: TCP client 192.168.1.170:55904 rejected: a client is already connected[0m
+[0;33mW (2099946) NETWORK: TCP client 192.168.1.170:55905 rejected: a client is already connected[0m
+[0;33mW (2100056) NETWORK: TCP client 192.168.1.170:55909 rejected: a client is already connected[0m
+[0;33mW (2100166) NETWORK: TCP client 192.168.1.170:55910 rejected: a client is already connected[0m
+[0;33mW (2100276) NETWORK: TCP client 192.168.1.170:55911 rejected: a client is already connected[0m
+[0;33mW (2100386) NETWORK: TCP client 192.168.1.170:55912 rejected: a client is already connected[0m
+[0;33mW (2100496) NETWORK: TCP client 192.168.1.170:61499 rejected: a client is already connected[0m
+[0;33mW (2100626) NETWORK: TCP client 192.168.1.170:61500 rejected: a client is already connected[0m
+[0;33mW (2100746) NETWORK: TCP client 192.168.1.170:61501 rejected: a client is already connected[0m
+[0;33mW (2100856) NETWORK: TCP client 192.168.1.170:61502 rejected: a client is already connected[0m
+[0;33mW (2100966) NETWORK: TCP client 192.168.1.170:61503 rejected: a client is already connected[0m
+[0;33mW (2101076) NETWORK: TCP client 192.168.1.170:61504 rejected: a client is already connected[0m
+[0;33mW (2101196) NETWORK: TCP client 192.168.1.170:61505 rejected: a client is already connected[0m
+[0;33mW (2101356) NETWORK: TCP client 192.168.1.170:61506 rejected: a client is already connected[0m
+[0;33mW (2101366) NETWORK: TCP client 192.168.1.170:61507 rejected: a client is already connected[0m
+[0;33mW (2101486) NETWORK: TCP client 192.168.1.170:61508 rejected: a client is already connected[0m
+[0;33mW (2101596) NETWORK: TCP client 192.168.1.170:61509 rejected: a client is already connected[0m
+[0;33mW (2101716) NETWORK: TCP client 192.168.1.170:61510 rejected: a client is already connected[0m
+[0;33mW (2101826) NETWORK: TCP client 192.168.1.170:61511 rejected: a client is already connected[0m
+[0;33mW (2101936) NETWORK: TCP client 192.168.1.170:61512 rejected: a client is already connected[0m
+[0;33mW (2102056) NETWORK: TCP client 192.168.1.170:61513 rejected: a client is already connected[0m
+[0;33mW (2102166) NETWORK: TCP client 192.168.1.170:61514 rejected: a client is already connected[0m
+[0;33mW (2102286) NETWORK: TCP client 192.168.1.170:61515 rejected: a client is already connected[0m
+[0;33mW (2102396) NETWORK: TCP client 192.168.1.170:61516 rejected: a client is already connected[0m
+[0;33mW (2102506) NETWORK: TCP client 192.168.1.170:61617 rejected: a client is already connected[0m
+[0;33mW (2102616) NETWORK: TCP client 192.168.1.170:61618 rejected: a client is already connected[0m
+[0;33mW (2102726) NETWORK: TCP client 192.168.1.170:61619 rejected: a client is already connected[0m
+[0;33mW (2102846) NETWORK: TCP client 192.168.1.170:61620 rejected: a client is already connected[0m
+[0;33mW (2102956) NETWORK: TCP client 192.168.1.170:61621 rejected: a client is already connected[0m
+[0;33mW (2103086) NETWORK: TCP client 192.168.1.170:61625 rejected: a client is already connected[0m
+[0;33mW (2103196) NETWORK: TCP client 192.168.1.170:61626 rejected: a client is already connected[0m
+[0;33mW (2103306) NETWORK: TCP client 192.168.1.170:61627 rejected: a client is already connected[0m
+[0;33mW (2103426) NETWORK: TCP client 192.168.1.170:61628 rejected: a client is already connected[0m
+[0;33mW (2103536) NETWORK: TCP client 192.168.1.170:61632 rejected: a client is already connected[0m
+[0;33mW (2103646) NETWORK: TCP client 192.168.1.170:61634 rejected: a client is already connected[0m
+[0;33mW (2103766) NETWORK: TCP client 192.168.1.170:55917 rejected: a client is already connected[0m
+[0;33mW (2103886) NETWORK: TCP client 192.168.1.170:55918 rejected: a client is already connected[0m
+[0;33mW (2104006) NETWORK: TCP client 192.168.1.170:56088 rejected: a client is already connected[0m
+[0;33mW (2104126) NETWORK: TCP client 192.168.1.170:56089 rejected: a client is already connected[0m
+[0;33mW (2104236) NETWORK: TCP client 192.168.1.170:56090 rejected: a client is already connected[0m
+[0;33mW (2104346) NETWORK: TCP client 192.168.1.170:59560 rejected: a client is already connected[0m
+[0;33mW (2104456) NETWORK: TCP client 192.168.1.170:58308 rejected: a client is already connected[0m
+[0;33mW (2104576) NETWORK: TCP client 192.168.1.170:58309 rejected: a client is already connected[0m
+[0;33mW (2104686) NETWORK: TCP client 192.168.1.170:58310 rejected: a client is already connected[0m
+[0;33mW (2104806) NETWORK: TCP client 192.168.1.170:58311 rejected: a client is already connected[0m
+[0;33mW (2104916) NETWORK: TCP client 192.168.1.170:58312 rejected: a client is already connected[0m
+[0;33mW (2105046) NETWORK: TCP client 192.168.1.170:58314 rejected: a client is already connected[0m
+[0;33mW (2105156) NETWORK: TCP client 192.168.1.170:58315 rejected: a client is already connected[0m
+[0;33mW (2105276) NETWORK: TCP client 192.168.1.170:58316 rejected: a client is already connected[0m
+[0;33mW (2105396) NETWORK: TCP client 192.168.1.170:58317 rejected: a client is already connected[0m
+[0;33mW (2105506) NETWORK: TCP client 192.168.1.170:58318 rejected: a client is already connected[0m
+[0;33mW (2105616) NETWORK: TCP client 192.168.1.170:58319 rejected: a client is already connected[0m
+[0;33mW (2105736) NETWORK: TCP client 192.168.1.170:58320 rejected: a client is already connected[0m
+[0;33mW (2105846) NETWORK: TCP client 192.168.1.170:58321 rejected: a client is already connected[0m
+[0;33mW (2105956) NETWORK: TCP client 192.168.1.170:58322 rejected: a client is already connected[0m
+[0;33mW (2106066) NETWORK: TCP client 192.168.1.170:58323 rejected: a client is already connected[0m
+[0;33mW (2106186) NETWORK: TCP client 192.168.1.170:58324 rejected: a client is already connected[0m
+[0;33mW (2106296) NETWORK: TCP client 192.168.1.170:58325 rejected: a client is already connected[0m
+[0;33mW (2106416) NETWORK: TCP client 192.168.1.170:58326 rejected: a client is already connected[0m
+[0;33mW (2106546) NETWORK: TCP client 192.168.1.170:58327 rejected: a client is already connected[0m
+[0;33mW (2106656) NETWORK: TCP client 192.168.1.170:58328 rejected: a client is already connected[0m
+[0;33mW (2106766) NETWORK: TCP client 192.168.1.170:58329 rejected: a client is already connected[0m
+[0;33mW (2106886) NETWORK: TCP client 192.168.1.170:58330 rejected: a client is already connected[0m
+[0;33mW (2107006) NETWORK: TCP client 192.168.1.170:58331 rejected: a client is already connected[0m
+[0;33mW (2107116) NETWORK: TCP client 192.168.1.170:58332 rejected: a client is already connected[0m
+[0;33mW (2107236) NETWORK: TCP client 192.168.1.170:58333 rejected: a client is already connected[0m
+[0;33mW (2107346) NETWORK: TCP client 192.168.1.170:58334 rejected: a client is already connected[0m
+[0;33mW (2107476) NETWORK: TCP client 192.168.1.170:58335 rejected: a client is already connected[0m
+[0;33mW (2107596) NETWORK: TCP client 192.168.1.170:58336 rejected: a client is already connected[0m
+[0;33mW (2107706) NETWORK: TCP client 192.168.1.170:58337 rejected: a client is already connected[0m
+[0;33mW (2107816) NETWORK: TCP client 192.168.1.170:58338 rejected: a client is already connected[0m
+[0;33mW (2107936) NETWORK: TCP client 192.168.1.170:58339 rejected: a client is already connected[0m
+[0;33mW (2108056) NETWORK: TCP client 192.168.1.170:58340 rejected: a client is already connected[0m
+[0;33mW (2108166) NETWORK: TCP client 192.168.1.170:58342 rejected: a client is already connected[0m
+[0;33mW (2108286) NETWORK: TCP client 192.168.1.170:58343 rejected: a client is already connected[0m
+[0;33mW (2108396) NETWORK: TCP client 192.168.1.170:58344 rejected: a client is already connected[0m
+[0;33mW (2108516) NETWORK: TCP client 192.168.1.170:58345 rejected: a client is already connected[0m
+[0;33mW (2108626) NETWORK: TCP client 192.168.1.170:58346 rejected: a client is already connected[0m
+[0;33mW (2108746) NETWORK: TCP client 192.168.1.170:58347 rejected: a client is already connected[0m
+[0;33mW (2108866) NETWORK: TCP client 192.168.1.170:58348 rejected: a client is already connected[0m
+[0;33mW (2108976) NETWORK: TCP client 192.168.1.170:58349 rejected: a client is already connected[0m
+[0;33mW (2109086) NETWORK: TCP client 192.168.1.170:58350 rejected: a client is already connected[0m
+[0;33mW (2109206) NETWORK: TCP client 192.168.1.170:58351 rejected: a client is already connected[0m
+[0;33mW (2109326) NETWORK: TCP client 192.168.1.170:58352 rejected: a client is already connected[0m
+[0;33mW (2109436) NETWORK: TCP client 192.168.1.170:58353 rejected: a client is already connected[0m
+[0;33mW (2109556) NETWORK: TCP client 192.168.1.170:58354 rejected: a client is already connected[0m
+[0;33mW (2109666) NETWORK: TCP client 192.168.1.170:58355 rejected: a client is already connected[0m
+[0;33mW (2109786) NETWORK: TCP client 192.168.1.170:58356 rejected: a client is already connected[0m
+[0;33mW (2109896) NETWORK: TCP client 192.168.1.170:58357 rejected: a client is already connected[0m
+[0;33mW (2110016) NETWORK: TCP client 192.168.1.170:58358 rejected: a client is already connected[0m
+[0;33mW (2110146) NETWORK: TCP client 192.168.1.170:58359 rejected: a client is already connected[0m
+[0;33mW (2110256) NETWORK: TCP client 192.168.1.170:58360 rejected: a client is already connected[0m
+[0;33mW (2110366) NETWORK: TCP client 192.168.1.170:58361 rejected: a client is already connected[0m
+[0;33mW (2110506) NETWORK: TCP client 192.168.1.170:58362 rejected: a client is already connected[0m
+[0;33mW (2110626) NETWORK: TCP client 192.168.1.170:58363 rejected: a client is already connected[0m
+[0;33mW (2110736) NETWORK: TCP client 192.168.1.170:53085 rejected: a client is already connected[0m
+[0;33mW (2110846) NETWORK: TCP client 192.168.1.170:53086 rejected: a client is already connected[0m
+[0;33mW (2110966) NETWORK: TCP client 192.168.1.170:53087 rejected: a client is already connected[0m
+[0;33mW (2111076) NETWORK: TCP client 192.168.1.170:53091 rejected: a client is already connected[0m
+[0;33mW (2111186) NETWORK: TCP client 192.168.1.170:53092 rejected: a client is already connected[0m
+[0;33mW (2111296) NETWORK: TCP client 192.168.1.170:53093 rejected: a client is already connected[0m
+[0;33mW (2111416) NETWORK: TCP client 192.168.1.170:53094 rejected: a client is already connected[0m
+[0;33mW (2111576) NETWORK: TCP client 192.168.1.170:53095 rejected: a client is already connected[0m
+[0;33mW (2111586) NETWORK: TCP client 192.168.1.170:53096 rejected: a client is already connected[0m
+[0;33mW (2111706) NETWORK: TCP client 192.168.1.170:53097 rejected: a client is already connected[0m
+[0;33mW (2111826) NETWORK: TCP client 192.168.1.170:53098 rejected: a client is already connected[0m
+[0;33mW (2111936) NETWORK: TCP client 192.168.1.170:53099 rejected: a client is already connected[0m
+[0;33mW (2112056) NETWORK: TCP client 192.168.1.170:53100 rejected: a client is already connected[0m
+[0;33mW (2112166) NETWORK: TCP client 192.168.1.170:53101 rejected: a client is already connected[0m
+[0;33mW (2112286) NETWORK: TCP client 192.168.1.170:53102 rejected: a client is already connected[0m
+[0;33mW (2112406) NETWORK: TCP client 192.168.1.170:53103 rejected: a client is already connected[0m
+[0;33mW (2112516) NETWORK: TCP client 192.168.1.170:53104 rejected: a client is already connected[0m
+[0;33mW (2112626) NETWORK: TCP client 192.168.1.170:53105 rejected: a client is already connected[0m
+[0;33mW (2112746) NETWORK: TCP client 192.168.1.170:53106 rejected: a client is already connected[0m
+[0;33mW (2112856) NETWORK: TCP client 192.168.1.170:53107 rejected: a client is already connected[0m
+[0;33mW (2112976) NETWORK: TCP client 192.168.1.170:53108 rejected: a client is already connected[0m
+[0;33mW (2113086) NETWORK: TCP client 192.168.1.170:53111 rejected: a client is already connected[0m
+[0;33mW (2113206) NETWORK: TCP client 192.168.1.170:53112 rejected: a client is already connected[0m
+[0;33mW (2113326) NETWORK: TCP client 192.168.1.170:53113 rejected: a client is already connected[0m
+[0;33mW (2113436) NETWORK: TCP client 192.168.1.170:53114 rejected: a client is already connected[0m
+[0;33mW (2113546) NETWORK: TCP client 192.168.1.170:53115 rejected: a client is already connected[0m
+[0;33mW (2113656) NETWORK: TCP client 192.168.1.170:53116 rejected: a client is already connected[0m
+[0;33mW (2113766) NETWORK: TCP client 192.168.1.170:53117 rejected: a client is already connected[0m
+[0;33mW (2113886) NETWORK: TCP client 192.168.1.170:53118 rejected: a client is already connected[0m
+[0;33mW (2114006) NETWORK: TCP client 192.168.1.170:53119 rejected: a client is already connected[0m
+[0;33mW (2114126) NETWORK: TCP client 192.168.1.170:53120 rejected: a client is already connected[0m
+[0;33mW (2114236) NETWORK: TCP client 192.168.1.170:53121 rejected: a client is already connected[0m
+[0;33mW (2114346) NETWORK: TCP client 192.168.1.170:53124 rejected: a client is already connected[0m
+[0;33mW (2114456) NETWORK: TCP client 192.168.1.170:53125 rejected: a client is already connected[0m
+[0;33mW (2114566) NETWORK: TCP client 192.168.1.170:53126 rejected: a client is already connected[0m
+[0;33mW (2114686) NETWORK: TCP client 192.168.1.170:53127 rejected: a client is already connected[0m
+[0;33mW (2114796) NETWORK: TCP client 192.168.1.170:53128 rejected: a client is already connected[0m
+[0;33mW (2114906) NETWORK: TCP client 192.168.1.170:53129 rejected: a client is already connected[0m
+[0;33mW (2115016) NETWORK: TCP client 192.168.1.170:53130 rejected: a client is already connected[0m
+[0;33mW (2115126) NETWORK: TCP client 192.168.1.170:53131 rejected: a client is already connected[0m
+[0;33mW (2115236) NETWORK: TCP client 192.168.1.170:53132 rejected: a client is already connected[0m
+[0;33mW (2115356) NETWORK: TCP client 192.168.1.170:53133 rejected: a client is already connected[0m
+[0;33mW (2115476) NETWORK: TCP client 192.168.1.170:53134 rejected: a client is already connected[0m
+[0;33mW (2115586) NETWORK: TCP client 192.168.1.170:53138 rejected: a client is already connected[0m
+[0;33mW (2115696) NETWORK: TCP client 192.168.1.170:53139 rejected: a client is already connected[0m
+[0;33mW (2115826) NETWORK: TCP client 192.168.1.170:53140 rejected: a client is already connected[0m
+[0;33mW (2115936) NETWORK: TCP client 192.168.1.170:53141 rejected: a client is already connected[0m
+[0;33mW (2116046) NETWORK: TCP client 192.168.1.170:53142 rejected: a client is already connected[0m
+[0;33mW (2116166) NETWORK: TCP client 192.168.1.170:53143 rejected: a client is already connected[0m
+[0;33mW (2116276) NETWORK: TCP client 192.168.1.170:53144 rejected: a client is already connected[0m
+[0;33mW (2116396) NETWORK: TCP client 192.168.1.170:53145 rejected: a client is already connected[0m
+[0;33mW (2116506) NETWORK: TCP client 192.168.1.170:53147 rejected: a client is already connected[0m
+[0;33mW (2131596) NETWORK: TCP client 192.168.1.170:57670 rejected: a client is already connected[0m
+[0;33mW (2131906) NETWORK: TCP client 192.168.1.170:57671 rejected: a client is already connected[0m
+[0;33mW (2132226) NETWORK: TCP client 192.168.1.170:57672 rejected: a client is already connected[0m
+[0;33mW (2211986) NETWORK: TCP client 192.168.1.170:62243 rejected: a client is already connected[0m
+[0;33mW (2212096) NETWORK: TCP client 192.168.1.170:62246 rejected: a client is already connected[0m
+[0;33mW (2212216) NETWORK: TCP client 192.168.1.170:62247 rejected: a client is already connected[0m
+[0;33mW (2212326) NETWORK: TCP client 192.168.1.170:62248 rejected: a client is already connected[0m
+[0;33mW (2212436) NETWORK: TCP client 192.168.1.170:62250 rejected: a client is already connected[0m
+[0;33mW (2212556) NETWORK: TCP client 192.168.1.170:62251 rejected: a client is already connected[0m
+[0;33mW (2212676) NETWORK: TCP client 192.168.1.170:62252 rejected: a client is already connected[0m
+[0;33mW (2212796) NETWORK: TCP client 192.168.1.170:62253 rejected: a client is already connected[0m
+[0;33mW (2212906) NETWORK: TCP client 192.168.1.170:62254 rejected: a client is already connected[0m
+[0;33mW (2213026) NETWORK: TCP client 192.168.1.170:62255 rejected: a client is already connected[0m
+[0;33mW (2213136) NETWORK: TCP client 192.168.1.170:62256 rejected: a client is already connected[0m
+[0;33mW (2213246) NETWORK: TCP client 192.168.1.170:62257 rejected: a client is already connected[0m
+[0;33mW (2213366) NETWORK: TCP client 192.168.1.170:62258 rejected: a client is already connected[0m
+[0;33mW (2213476) NETWORK: TCP client 192.168.1.170:62259 rejected: a client is already connected[0m
+[0;33mW (2213586) NETWORK: TCP client 192.168.1.170:65491 rejected: a client is already connected[0m
+[0;33mW (2213696) NETWORK: TCP client 192.168.1.170:59105 rejected: a client is already connected[0m
+[0;33mW (2213816) NETWORK: TCP client 192.168.1.170:50225 rejected: a client is already connected[0m
+[0;33mW (2213926) NETWORK: TCP client 192.168.1.170:61130 rejected: a client is already connected[0m
+[0;33mW (2214036) NETWORK: TCP client 192.168.1.170:61131 rejected: a client is already connected[0m
+[0;33mW (2214146) NETWORK: TCP client 192.168.1.170:53634 rejected: a client is already connected[0m
+[0;33mW (2214266) NETWORK: TCP client 192.168.1.170:53635 rejected: a client is already connected[0m
+[0;33mW (2214376) NETWORK: TCP client 192.168.1.170:55865 rejected: a client is already connected[0m
+[0;33mW (2214486) NETWORK: TCP client 192.168.1.170:55866 rejected: a client is already connected[0m
+[0;33mW (2214946) NETWORK: TCP client 192.168.1.170:55867 rejected: a client is already connected[0m
+[0;33mW (2215116) NETWORK: TCP client 192.168.1.170:55869 rejected: a client is already connected[0m
+[0;33mW (2215226) NETWORK: TCP client 192.168.1.170:55870 rejected: a client is already connected[0m
+[0;33mW (2215336) NETWORK: TCP client 192.168.1.170:55872 rejected: a client is already connected[0m
+[0;33mW (2215506) NETWORK: TCP client 192.168.1.170:55873 rejected: a client is already connected[0m
+[0;33mW (2215626) NETWORK: TCP client 192.168.1.170:55874 rejected: a client is already connected[0m
+[0;33mW (2215736) NETWORK: TCP client 192.168.1.170:55875 rejected: a client is already connected[0m
+[0;33mW (2215846) NETWORK: TCP client 192.168.1.170:55876 rejected: a client is already connected[0m
+[0;33mW (2215966) NETWORK: TCP client 192.168.1.170:55878 rejected: a client is already connected[0m
+[0;33mW (2216076) NETWORK: TCP client 192.168.1.170:55879 rejected: a client is already connected[0m
+[0;33mW (2216196) NETWORK: TCP client 192.168.1.170:55880 rejected: a client is already connected[0m
+[0;33mW (2216316) NETWORK: TCP client 192.168.1.170:55881 rejected: a client is already connected[0m
+[0;33mW (2216436) NETWORK: TCP client 192.168.1.170:55884 rejected: a client is already connected[0m
+[0;33mW (2216546) NETWORK: TCP client 192.168.1.170:55885 rejected: a client is already connected[0m
+[0;33mW (2216666) NETWORK: TCP client 192.168.1.170:55886 rejected: a client is already connected[0m
+[0;33mW (2216776) NETWORK: TCP client 192.168.1.170:55887 rejected: a client is already connected[0m
+[0;33mW (2216886) NETWORK: TCP client 192.168.1.170:55888 rejected: a client is already connected[0m
+[0;33mW (2217006) NETWORK: TCP client 192.168.1.170:55889 rejected: a client is already connected[0m
+[0;33mW (2217126) NETWORK: TCP client 192.168.1.170:55890 rejected: a client is already connected[0m
+[0;33mW (2217246) NETWORK: TCP client 192.168.1.170:55891 rejected: a client is already connected[0m
+[0;33mW (2217356) NETWORK: TCP client 192.168.1.170:55892 rejected: a client is already connected[0m
+[0;33mW (2217466) NETWORK: TCP client 192.168.1.170:55894 rejected: a client is already connected[0m
+[0;33mW (2217586) NETWORK: TCP client 192.168.1.170:55895 rejected: a client is already connected[0m
+[0;33mW (2217696) NETWORK: TCP client 192.168.1.170:55896 rejected: a client is already connected[0m
+[0;33mW (2217806) NETWORK: TCP client 192.168.1.170:55897 rejected: a client is already connected[0m
+[0;33mW (2217926) NETWORK: TCP client 192.168.1.170:55900 rejected: a client is already connected[0m
+[0;33mW (2218036) NETWORK: TCP client 192.168.1.170:55901 rejected: a client is already connected[0m
+[0;33mW (2218196) NETWORK: TCP client 192.168.1.170:55902 rejected: a client is already connected[0m
+[0;33mW (2218306) NETWORK: TCP client 192.168.1.170:55903 rejected: a client is already connected[0m
+[0;33mW (2218426) NETWORK: TCP client 192.168.1.170:55904 rejected: a client is already connected[0m
+[0;33mW (2218536) NETWORK: TCP client 192.168.1.170:55905 rejected: a client is already connected[0m
+[0;33mW (2218656) NETWORK: TCP client 192.168.1.170:55909 rejected: a client is already connected[0m
+[0;33mW (2218766) NETWORK: TCP client 192.168.1.170:55910 rejected: a client is already connected[0m
+[0;33mW (2218876) NETWORK: TCP client 192.168.1.170:55911 rejected: a client is already connected[0m
+[0;33mW (2218996) NETWORK: TCP client 192.168.1.170:55912 rejected: a client is already connected[0m
+[0;33mW (2219106) NETWORK: TCP client 192.168.1.170:55913 rejected: a client is already connected[0m
+[0;33mW (2219216) NETWORK: TCP client 192.168.1.170:55914 rejected: a client is already connected[0m
+[0;33mW (2219336) NETWORK: TCP client 192.168.1.170:55917 rejected: a client is already connected[0m
+[0;33mW (2219456) NETWORK: TCP client 192.168.1.170:55918 rejected: a client is already connected[0m
+[0;33mW (2219566) NETWORK: TCP client 192.168.1.170:55919 rejected: a client is already connected[0m
+[0;33mW (2219686) NETWORK: TCP client 192.168.1.170:55920 rejected: a client is already connected[0m
+[0;33mW (2219796) NETWORK: TCP client 192.168.1.170:55921 rejected: a client is already connected[0m
+[0;33mW (2219906) NETWORK: TCP client 192.168.1.170:55922 rejected: a client is already connected[0m
+[0;33mW (2220016) NETWORK: TCP client 192.168.1.170:55923 rejected: a client is already connected[0m
+[0;33mW (2220136) NETWORK: TCP client 192.168.1.170:55928 rejected: a client is already connected[0m
+[0;33mW (2220246) NETWORK: TCP client 192.168.1.170:55929 rejected: a client is already connected[0m
+[0;33mW (2220356) NETWORK: TCP client 192.168.1.170:63872 rejected: a client is already connected[0m
+[0;33mW (2220466) NETWORK: TCP client 192.168.1.170:63873 rejected: a client is already connected[0m
+[0;33mW (2220586) NETWORK: TCP client 192.168.1.170:63874 rejected: a client is already connected[0m
+[0;33mW (2220696) NETWORK: TCP client 192.168.1.170:63875 rejected: a client is already connected[0m
+[0;33mW (2220816) NETWORK: TCP client 192.168.1.170:63878 rejected: a client is already connected[0m
+[0;33mW (2220926) NETWORK: TCP client 192.168.1.170:63880 rejected: a client is already connected[0m
+[0;33mW (2221036) NETWORK: TCP client 192.168.1.170:63881 rejected: a client is already connected[0m
+[0;33mW (2221146) NETWORK: TCP client 192.168.1.170:63882 rejected: a client is already connected[0m
+[0;33mW (2221286) NETWORK: TCP client 192.168.1.170:63883 rejected: a client is already connected[0m
+[0;33mW (2221396) NETWORK: TCP client 192.168.1.170:63885 rejected: a client is already connected[0m
+[0;33mW (2221506) NETWORK: TCP client 192.168.1.170:63886 rejected: a client is already connected[0m
+[0;33mW (2221616) NETWORK: TCP client 192.168.1.170:63887 rejected: a client is already connected[0m
+[0;33mW (2221726) NETWORK: TCP client 192.168.1.170:63888 rejected: a client is already connected[0m
+[0;33mW (2221846) NETWORK: TCP client 192.168.1.170:63889 rejected: a client is already connected[0m
+[0;33mW (2221966) NETWORK: TCP client 192.168.1.170:63890 rejected: a client is already connected[0m
+[0;33mW (2222076) NETWORK: TCP client 192.168.1.170:63891 rejected: a client is already connected[0m
+[0;33mW (2222186) NETWORK: TCP client 192.168.1.170:63892 rejected: a client is already connected[0m
+[0;33mW (2222306) NETWORK: TCP client 192.168.1.170:63893 rejected: a client is already connected[0m
+[0;33mW (2222426) NETWORK: TCP client 192.168.1.170:63894 rejected: a client is already connected[0m
+[0;33mW (2222536) NETWORK: TCP client 192.168.1.170:63895 rejected: a client is already connected[0m
+[0;33mW (2222656) NETWORK: TCP client 192.168.1.170:63896 rejected: a client is already connected[0m
+[0;33mW (2222766) NETWORK: TCP client 192.168.1.170:63897 rejected: a client is already connected[0m
+[0;33mW (2222886) NETWORK: TCP client 192.168.1.170:63898 rejected: a client is already connected[0m
+[0;33mW (2222996) NETWORK: TCP client 192.168.1.170:63899 rejected: a client is already connected[0m
+[0;33mW (2223116) NETWORK: TCP client 192.168.1.170:63902 rejected: a client is already connected[0m
+[0;33mW (2223236) NETWORK: TCP client 192.168.1.170:63903 rejected: a client is already connected[0m
+[0;33mW (2223346) NETWORK: TCP client 192.168.1.170:63904 rejected: a client is already connected[0m
+[0;33mW (2223466) NETWORK: TCP client 192.168.1.170:63905 rejected: a client is already connected[0m
+[0;33mW (2223586) NETWORK: TCP client 192.168.1.170:63906 rejected: a client is already connected[0m
+[0;33mW (2223706) NETWORK: TCP client 192.168.1.170:63907 rejected: a client is already connected[0m
+[0;33mW (2223826) NETWORK: TCP client 192.168.1.170:63908 rejected: a client is already connected[0m
+[0;33mW (2223936) NETWORK: TCP client 192.168.1.170:63909 rejected: a client is already connected[0m
+[0;33mW (2224046) NETWORK: TCP client 192.168.1.170:63910 rejected: a client is already connected[0m
+[0;33mW (2224166) NETWORK: TCP client 192.168.1.170:63911 rejected: a client is already connected[0m
+[0;33mW (2224276) NETWORK: TCP client 192.168.1.170:63912 rejected: a client is already connected[0m
+[0;33mW (2224416) NETWORK: TCP client 192.168.1.170:63913 rejected: a client is already connected[0m
+[0;33mW (2224526) NETWORK: TCP client 192.168.1.170:63914 rejected: a client is already connected[0m
+[0;33mW (2224636) NETWORK: TCP client 192.168.1.170:63915 rejected: a client is already connected[0m
+[0;33mW (2224756) NETWORK: TCP client 192.168.1.170:63916 rejected: a client is already connected[0m
+[0;33mW (2224876) NETWORK: TCP client 192.168.1.170:63917 rejected: a client is already connected[0m
+[0;33mW (2224986) NETWORK: TCP client 192.168.1.170:63918 rejected: a client is already connected[0m
+[0;33mW (2225106) NETWORK: TCP client 192.168.1.170:62212 rejected: a client is already connected[0m
+[0;33mW (2225216) NETWORK: TCP client 192.168.1.170:62214 rejected: a client is already connected[0m
+[0;33mW (2225336) NETWORK: TCP client 192.168.1.170:62215 rejected: a client is already connected[0m
+[0;33mW (2225456) NETWORK: TCP client 192.168.1.170:57053 rejected: a client is already connected[0m
+[0;33mW (2225576) NETWORK: TCP client 192.168.1.170:57054 rejected: a client is already connected[0m
+[0;33mW (2225686) NETWORK: TCP client 192.168.1.170:57055 rejected: a client is already connected[0m
+[0;33mW (2225806) NETWORK: TCP client 192.168.1.170:57056 rejected: a client is already connected[0m
+[0;33mW (2225916) NETWORK: TCP client 192.168.1.170:57057 rejected: a client is already connected[0m
+[0;33mW (2226036) NETWORK: TCP client 192.168.1.170:57058 rejected: a client is already connected[0m
+[0;33mW (2226156) NETWORK: TCP client 192.168.1.170:57059 rejected: a client is already connected[0m
+[0;33mW (2226266) NETWORK: TCP client 192.168.1.170:57060 rejected: a client is already connected[0m
+[0;33mW (2226376) NETWORK: TCP client 192.168.1.170:57061 rejected: a client is already connected[0m
+[0;33mW (2226496) NETWORK: TCP client 192.168.1.170:57062 rejected: a client is already connected[0m
+[0;33mW (2226616) NETWORK: TCP client 192.168.1.170:57063 rejected: a client is already connected[0m
+[0;33mW (2226726) NETWORK: TCP client 192.168.1.170:57064 rejected: a client is already connected[0m
+[0;33mW (2226846) NETWORK: TCP client 192.168.1.170:57065 rejected: a client is already connected[0m
+[0;33mW (2226956) NETWORK: TCP client 192.168.1.170:57066 rejected: a client is already connected[0m
+[0;33mW (2227076) NETWORK: TCP client 192.168.1.170:57067 rejected: a client is already connected[0m
+[0;33mW (2227206) NETWORK: TCP client 192.168.1.170:57068 rejected: a client is already connected[0m
+[0;33mW (2227316) NETWORK: TCP client 192.168.1.170:57069 rejected: a client is already connected[0m
+[0;32mI (2379986) BRIDGE: TCP client closed: disconnected by peer[0m
+[0;32mI (2482176) NETWORK: TCP client connected: 192.168.1.170:55460[0m
+[0;32mI (2482426) BRIDGE: TCP client closed: disconnected by peer[0m
+[0;32mI (2482436) NETWORK: TCP client connected: 192.168.1.170:55462[0m
+[0;32mI (2484516) BRIDGE: TCP client closed: disconnected by peer[0m
+[0;32mI (2484576) NETWORK: TCP client connected: 192.168.1.170:55466[0m
+[0;32mI (2484856) BRIDGE: TCP client closed: disconnected by peer[0m
+[0;32mI (2484866) NETWORK: TCP client connected: 192.168.1.170:55467[0m
+[0;33mW (2485176) NETWORK: TCP client 192.168.1.170:55468 rejected: a client is already connected[0m
+[0;33mW (2485206) BRIDGE: TCP client send failed: errno 104[0m
+[0;32mI (2485206) BRIDGE: TCP client closed: socket error[0m
+[0;32mI (2485296) NETWORK: TCP client connected: 192.168.1.170:55469[0m
+[0;32mI (2487116) BRIDGE: TCP client closed: disconnected by peer[0m
+[0;32mI (2487166) NETWORK: TCP client connected: 192.168.1.170:55471[0m
+[0;32mI (2487426) BRIDGE: TCP client closed: disconnected by peer[0m
+[0;32mI (2487426) NETWORK: TCP client connected: 192.168.1.170:55472[0m
+[0;32mI (2487696) BRIDGE: TCP client closed: disconnected by peer[0m
+[0;32mI (2487706) NETWORK: TCP client connected: 192.168.1.170:55476[0m
+[0;33mW (2487976) NETWORK: TCP client 192.168.1.170:55477 rejected: a client is already connected[0m
+[0;32mI (2488006) BRIDGE: TCP client closed: disconnected by peer[0m
+[0;32mI (2488016) NE

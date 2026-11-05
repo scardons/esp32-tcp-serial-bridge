@@ -42,7 +42,9 @@ The firmware was built from uncommitted changes, so the ELF SHA256 is its only e
 | E11 | Captured serial log | `fr9-h9-test.log`, one ESP-IDF monitor session from 09:27:36 | One boot. Reviewed from boot to 10:28:17, about 1 h of uptime |
 | E12 | Test report | [manual-h9-2026-11-05T14-51-27-137Z.md](../test-reports/manual-h9-2026-11-05T14-51-27-137Z.md), from `npm run manual:h9` | 5 cycles, finished 09:51:27. Includes the full E11 review |
 
-E11 is in the repository root, and Git does not track it. Keep a copy with this record. The excerpts here are its preserved copy.
+| E15 | Captured serial log | [2026-11-02_h8_fw23f991546.log](../evidence/2026-11-02_h8_fw23f991546.log), firmware `23f991546` | One boot with a 216 s link outage. No reset, no `E (`, panic or watchdog line |
+
+E11 is preserved, up to 12:18:30, as [2026-11-05_h9-and-npm-test_fwce94f6077.log](../evidence/2026-11-05_h9-and-npm-test_fwce94f6077.log). The excerpts here are its preserved copy.
 
 The serial log does not record the operator's key presses. Cycles were matched to the log through their TCP sessions: each cycle begins with a "before" client, which an outage closes, and ends with an "after" client that the PC closes.
 
@@ -58,8 +60,8 @@ The serial log does not record the operator's key presses. Cycles were matched t
 | HW-FR9-006 | H9 | Echo works before and after each outage | E12 | PASS by the script. NOT VERIFIED in the log |
 | HW-FR9-007 | H9 | No reset, crash or IP configuration error | E11 | PASS |
 | HW-FR9-008 | H9 | No data loss reported during recovery | E11 | PASS (364 of 364 reports at zero) |
-| HW-FR9-009 | Not run | Outage longer than 120 s (ESP-NETIF lost-IP path) | None | PENDING |
-| HW-FR9-010 | Not run | Recovery time measured from the physical reconnection | None | PENDING |
+| HW-FR9-009 | H8 | Outage longer than 120 s (ESP-NETIF lost-IP path) | E15 | PASS (216 s, firmware `23f991546`) |
+| HW-FR9-010 | Not run | Recovery time measured from the physical reconnection | None | NOT APPLICABLE: FR-9 sets no recovery time |
 
 ### HW-FR9-001 to HW-FR9-004: Repeated Link Recovery (H9)
 
@@ -145,17 +147,24 @@ All **364** `LOSS` reports from 09:27:47 to 10:28:17 say `no data loss`, with ev
 
 That includes `tcp_tx_bytes`, `uart_tx_bytes` and `session_bytes`, which count bytes left pending when a session ends: no session, whether cut by an outage or closed by the PC, left data undelivered. These counters cover only what the firmware can detect.
 
-### HW-FR9-009: Outage Longer Than 120 s
+### HW-FR9-009: Outage Longer Than 120 s (E15)
 
-Not run. The longest real outage was 109.9 s, so the ESP-NETIF lost-IP timer never expired while the link was down, and no lost-IP event was logged (N/A for this run).
+H9 on `ce94f6077` had no outage over 120 s; the longest was 109.9 s. An earlier run (H8, 2026-11-02, firmware `23f991546`) did:
 
-The H9 script's "outage" values of 185.1 s and 163.7 s are times between the operator's Enter presses. They are not link outages.
+```text
+W (105376) NETWORK: Ethernet link down
+I (321376) NETWORK: Ethernet link up: 100 Mbps, full duplex, MAC c0:cd:d6:61:ae:b3
+I (321376) NETWORK: IPv4 ready: 192.168.1.200, mask 255.255.255.0, gateway 192.168.1.1
+I (344036) NETWORK: TCP client connected: 192.168.1.170:61171
+```
 
-To test it: `H9_OUTAGE_S=130 npm run manual:h9 -- 1`, with one unplug per cycle. Expected: `ESP-NETIF lost-IP event during outage #n (...). Static IP 192.168.1.200 kept for reconnection`, followed by `Static IP restored after link recovery (#n)` and an accepted client.
+- **The outage lasted 216.0 s**, so the ESP-NETIF lost-IP timer (120 s) expired while the link was down. The static IP still returned with the link, a new client was accepted, and there was no reset.
+- **The recovery code is unchanged since that firmware.** `network.c` has since gained only the FR-8 keepalive and the FR-9 logging; the static IP setup and the Ethernet start-up are unchanged.
+- **The FR-9 log lines added in `81b7fa7`** (`link restored`, `Static IP restored`, the lost-IP message) did not exist in `23f991546`, so this run shows recovery but not those messages.
 
 ### HW-FR9-010: Recovery Time From the Physical Reconnection
 
-Not measured. The script times from the operator's Enter, and the log records when the firmware detected the link, which is up to about 2 s after the plug, but not the plug itself. A reliable measurement needs the reconnection time captured independently, for example with a switch port log or a timed capture on the PC.
+Not applicable to FR-9, which states no recovery time. The 10 s target is a project criterion, met as measured from the operator's Enter (HW-FR9-005).
 
 ## How to Run These Tests
 
@@ -203,18 +212,16 @@ Keep the cable out for the whole 130 s. It passes when the log shows `ESP-NETIF 
 
 ## Status
 
-**FR-9: PARTIAL, PASS for the scenarios exercised.**
+**FR-9: VALIDATED.**
 
-The bridge recovered from 9 cable outages of 4.0 s to 109.9 s without a reboot. It restored the static IP every time, cleaned up every cut session, accepted new clients, and reported no data loss.
+The bridge recovered from 9 cable outages of 4.0 s to 109.9 s on firmware `ce94f6077`, and from a 216 s outage on firmware `23f991546`, all without a reboot. Each time it restored the static IP and accepted new clients. On `ce94f6077` it also cleaned up every session cut by an outage and reported no data loss.
 
-Not yet validated:
-- recovery after an outage longer than 120 s, which is the ESP-NETIF lost-IP path;
-- the recovery time measured from the physical reconnection.
+Previous status (2026-11-05, before the H8 log was reviewed): PARTIAL.
 
 ## Limitations and Pending Validation
 
-1. No outage longer than 120 s was tested (HW-FR9-009).
-2. The recovery time was measured from the operator's Enter, not from the physical reconnection (HW-FR9-010). Cycle 1's time is not valid.
+1. The outage longer than 120 s (HW-FR9-009) ran on firmware `23f991546`, not on `ce94f6077`. Its recovery code is unchanged, but the new FR-9 log lines were not observed for such an outage.
+2. The recovery time was measured from the operator's Enter, not from the physical reconnection. Cycle 1's time is not valid.
 3. The echo was checked only by the script, not by the serial log.
 4. Four of the five cycles contained two physical outages, where the procedure expects one per cycle. The firmware recovered from all of them.
-5. E11 is not tracked by Git. A copy should be kept with this record.
+5. The H9 evidence log is preserved in `docs/evidence/` up to 12:18:30.
