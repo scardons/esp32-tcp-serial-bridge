@@ -39,7 +39,7 @@ The firmware was built from uncommitted changes, so the ELF SHA256 is its only e
 |---|---|---|---|
 | E9 | Captured tool output | `esptool write-flash`, `verify-flash` and a read-back of the app header, before the test | Flash hash verified. `verify-flash` digest matched `build/tcp_serial_bridge.bin`. The full ELF SHA256 read from flash matched the value above |
 | E10 | Captured tool output | Pre-test check by Claude Code | Boot log, `ping` 3 of 3 replies, TCP connection to port 4001 with a working echo |
-| E11 | Captured serial log | `fr9-h9-test.log`, one ESP-IDF monitor session from 09:27:36 | One boot. Reviewed from boot to 10:28:17, about 1 h of uptime |
+| E11 | Captured serial log | `fr9-h9-test.log` (now [2026-11-05_monitor-session_fwce94f6077.log](../evidence/2026-11-05_monitor-session_fwce94f6077.log)), one ESP-IDF monitor session from 09:27:36 | One boot. Reviewed from boot to 10:28:17, about 1 h of uptime |
 | E12 | Test report | [manual-h9-2026-11-05T14-51-27-137Z.md](../test-reports/manual-h9-2026-11-05T14-51-27-137Z.md), from `npm run manual:h9` | 5 cycles, finished 09:51:27. Includes the full E11 review |
 
 | E15 | Captured serial log | [2026-11-02_h8_fw23f991546.log](../evidence/2026-11-02_h8_fw23f991546.log), firmware `23f991546` | One boot with a 216 s link outage. No reset, no `E (`, panic or watchdog line |
