@@ -7,6 +7,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#include "driver/uart.h"
+
 #include "esp_app_desc.h"
 #include "esp_err.h"
 #include "esp_log.h"
@@ -268,6 +270,26 @@ static void log_firmware_identity(void)
     }
 }
 
+/*
+ * DIAGNOSTIC BUILD ONLY (branch diag/fr7-break, not for main): HW-FR7-009.
+ * With the GPIO32 to GPIO33 jumper, a break sent on UART1 TX reaches RX, the
+ * same as holding GPIO33 low. Three breaks of 255 bit times (about 2.2 ms at
+ * 115200), 12 s apart so each lands in its own LOSS report, with no client.
+ */
+static void diag_break_task(void *arg)
+{
+    vTaskDelay(pdMS_TO_TICKS(15000));
+
+    for (int i = 1; i <= 3; i++) {
+        const int pushed = uart_write_bytes_with_break(UART_NUM_1, "B", 1, 255);
+
+        ESP_LOGW(TAG, "DIAG: break %d of 3 sent on UART1 TX (%d)", i, pushed);
+        vTaskDelay(pdMS_TO_TICKS(12000));
+    }
+
+    vTaskDelete(NULL);
+}
+
 /**
  * Main application entry point.
  *
@@ -289,6 +311,10 @@ void app_main(void)
             esp_err_to_name(err)
         );
     } else if (bridge_ready) {
+        if (xTaskCreate(diag_break_task, "diag_break", 3072, NULL, 3, NULL) != pdPASS) {
+            ESP_LOGE(TAG, "DIAG: failed to create the break task");
+        }
+
         err = network_start_server();
 
         if (err != ESP_OK) {
