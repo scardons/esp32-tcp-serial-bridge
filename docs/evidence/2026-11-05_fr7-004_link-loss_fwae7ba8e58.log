@@ -1,0 +1,119 @@
+2026-11-05 14:56:45 ets Jul 29 2019 12:21:46
+2026-11-05 14:56:45 
+2026-11-05 14:56:45 rst:0x1 (POWERON_RESET),boot:0x12 (SPI_FAST_FLASH_BOOT)
+2026-11-05 14:56:45 configsip: 0, SPIWP:0xee
+2026-11-05 14:56:45 clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+2026-11-05 14:56:45 mode:DIO, clock div:2
+2026-11-05 14:56:45 load:0x3fff0040,len:6272
+2026-11-05 14:56:45 load:0x40078000,len:15824
+2026-11-05 14:56:45 load:0x40080400,len:3988
+2026-11-05 14:56:45 entry 0x40080644
+2026-11-05 14:56:45 I (27) boot: ESP-IDF v6.1 2nd stage bootloader
+2026-11-05 14:56:45 I (27) boot: compile time Oct 27 2026 12:59:12
+2026-11-05 14:56:45 I (28) boot: Multicore bootloader
+2026-11-05 14:56:45 I (29) boot: chip revision: v3.1
+2026-11-05 14:56:45 I (31) boot.esp32: SPI Speed      : 40MHz
+2026-11-05 14:56:45 I (35) boot.esp32: SPI Mode       : DIO
+2026-11-05 14:56:45 I (39) boot.esp32: SPI Flash Size : 4MB
+2026-11-05 14:56:45 I (42) boot: Enabling RNG early entropy source...
+2026-11-05 14:56:45 I (47) boot: Partition Table:
+2026-11-05 14:56:45 I (49) boot: ## Label            Usage          Type ST Offset   Length
+2026-11-05 14:56:45 I (56) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+2026-11-05 14:56:45 I (62) boot:  1 phy_init         RF data          01 01 0000f000 00001000
+2026-11-05 14:56:45 I (69) boot:  2 factory          factory app      00 00 00010000 00100000
+2026-11-05 14:56:45 I (75) boot: End of partition table
+2026-11-05 14:56:45 I (79) esp_image: segment 0: paddr=00010020 vaddr=3f400020 size=14718h ( 83736) map
+2026-11-05 14:56:45 I (116) esp_image: segment 1: paddr=00024740 vaddr=3ffb0000 size=02d1ch ( 11548) load
+2026-11-05 14:56:45 I (121) esp_image: segment 2: paddr=00027464 vaddr=40080000 size=08bb4h ( 35764) load
+2026-11-05 14:56:45 I (136) esp_image: segment 3: paddr=00030020 vaddr=400d0020 size=3539ch (218012) map
+2026-11-05 14:56:46 I (213) esp_image: segment 4: paddr=000653c4 vaddr=40088bb4 size=03ca4h ( 15524) load
+2026-11-05 14:56:46 I (220) esp_image: segment 5: paddr=00069070 vaddr=50000000 size=00028h (    40) load
+2026-11-05 14:56:46 I (227) boot: Loaded app from partition at offset 0x10000
+2026-11-05 14:56:46 I (227) boot: Disabling RNG early entropy source...
+2026-11-05 14:56:46 I (239) cpu_start: Multicore app
+2026-11-05 14:56:46 I (247) cpu_start: GPIO 3 and 1 are used as console UART I/O pins
+2026-11-05 14:56:46 I (248) cpu_start: Pro cpu start user code
+2026-11-05 14:56:46 I (248) cpu_start: cpu freq: 160000000 Hz
+2026-11-05 14:56:46 I (250) app_init: Application information:
+2026-11-05 14:56:46 I (253) app_init: Project name:     tcp_serial_bridge
+2026-11-05 14:56:46 I (258) app_init: App version:      7ffc134
+2026-11-05 14:56:46 I (262) app_init: Compile time:     Nov  5 2026 14:05:04
+2026-11-05 14:56:46 I (267) app_init: ELF file SHA256:  ae7ba8e58...
+2026-11-05 14:56:46 I (271) app_init: ESP-IDF:          v6.1
+2026-11-05 14:56:46 I (275) efuse_init: Min chip rev:     v0.0
+2026-11-05 14:56:46 I (279) efuse_init: Max chip rev:     v3.99 
+2026-11-05 14:56:46 I (283) efuse_init: Chip rev:         v3.1
+2026-11-05 14:56:46 I (287) heap_init: Initializing. RAM available for dynamic allocation:
+2026-11-05 14:56:46 I (293) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
+2026-11-05 14:56:46 I (298) heap_init: At 3FFB4648 len 0002B9B8 (174 KiB): DRAM
+2026-11-05 14:56:46 I (303) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM
+2026-11-05 14:56:46 I (309) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM
+2026-11-05 14:56:46 I (314) heap_init: At 4008C858 len 000137A8 (77 KiB): IRAM
+2026-11-05 14:56:46 I (321) spi_flash: detected chip: generic
+2026-11-05 14:56:46 I (323) spi_flash: flash io: dio
+2026-11-05 14:56:46 I (328) main_task: Started on CPU0
+2026-11-05 14:56:46 I (328) main_task: Calling app_main()
+2026-11-05 14:56:46 I (328) MAIN: Firmware: version 7ffc134, ELF SHA256 ae7ba8e58, built Nov  5 2026 14:05:04, ESP-IDF v6.1
+2026-11-05 14:56:46 I (338) uart: queue free spaces: 128
+2026-11-05 14:56:46 I (338) MAIN: UART1 initialized successfully: 115200 baud, 8N1, no flow control
+2026-11-05 14:56:46 I (888) NETWORK: Ethernet driver installed, PHY address 1
+2026-11-05 14:56:46 I (888) esp_eth.netif.netif_glue: c0:cd:d6:61:ae:b3
+2026-11-05 14:56:46 I (888) esp_eth.netif.netif_glue: ethernet attached to netif
+2026-11-05 14:56:48 I (2988) NETWORK: Ethernet started
+2026-11-05 14:56:48 I (2988) NETWORK: Ethernet link up: 100 Mbps, full duplex, MAC c0:cd:d6:61:ae:b3
+2026-11-05 14:56:48 I (2988) esp_netif_handlers: eth ip: 192.168.1.200, mask: 255.255.255.0, gw: 192.168.1.1
+2026-11-05 14:56:48 I (2988) NETWORK: TCP server listening on port 4001
+2026-11-05 14:56:48 I (2988) NETWORK: IPv4 ready: 192.168.1.200, mask 255.255.255.0, gateway 192.168.1.1
+2026-11-05 14:56:49 I (2988) main_task: Returned from app_main()
+2026-11-05 14:56:56 I (10358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:56:56 I (10368) LOSS: Reporter stack: 2028 of 3072 bytes never used
+2026-11-05 14:56:56 I (10438) NETWORK: TCP keepalive: idle 5 s, interval 2 s, 3 probes
+2026-11-05 14:56:56 I (10438) NETWORK: TCP client connected: 192.168.1.58:58618
+2026-11-05 14:56:56 I (10438) NETWORK: TCP server stack: 2984 of 4096 bytes never used
+2026-11-05 14:57:06 I (20358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:57:16 I (30358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:57:20 W (34988) NETWORK: Ethernet link down (#1)
+2026-11-05 14:57:20 W (34988) BRIDGE: TCP client receive failed: errno 113
+2026-11-05 14:57:20 I (34988) BRIDGE: TCP client closed: socket error
+2026-11-05 14:57:20 I (34988) BRIDGE: Heap after session: 254588 bytes free, 223840 minimum ever
+2026-11-05 14:57:20 I (34998) BRIDGE: Bridge stack: 2840 of 4096 bytes never used
+2026-11-05 14:57:26 W (40358) LOSS: 10.0 s: DATA LOSS: uart_rx_overflow=18 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=2308 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=1 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:57:36 I (50358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:57:46 I (60358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:57:56 I (70358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:58:06 I (80358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:58:12 I (86988) NETWORK: Ethernet link up: 100 Mbps, full duplex, MAC c0:cd:d6:61:ae:b3
+2026-11-05 14:58:12 I (86988) NETWORK: Ethernet link restored after 51.9 s outage (#1)
+2026-11-05 14:58:12 I (86988) esp_netif_handlers: eth ip: 192.168.1.200, mask: 255.255.255.0, gw: 192.168.1.1
+2026-11-05 14:58:13 I (86998) NETWORK: IPv4 ready: 192.168.1.200, mask 255.255.255.0, gateway 192.168.1.1
+2026-11-05 14:58:13 I (87008) NETWORK: Static IP restored after link recovery (#1)
+2026-11-05 14:58:16 I (90358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:58:26 I (100358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:58:36 I (110358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:58:46 I (120358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:58:56 I (130358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:59:06 I (140358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:59:08 I (142488) NETWORK: TCP keepalive: idle 5 s, interval 2 s, 3 probes
+2026-11-05 14:59:08 I (142488) NETWORK: TCP client connected: 192.168.1.58:33718
+2026-11-05 14:59:16 I (150348) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:59:26 I (160348) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:59:36 I (170348) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:59:46 I (180348) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 14:59:56 I (190348) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 15:00:02 I (196808) BRIDGE: TCP client closed: disconnected by peer
+2026-11-05 15:00:02 I (196808) BRIDGE: Heap after session: 254276 bytes free, 223840 minimum ever
+2026-11-05 15:00:02 I (196808) BRIDGE: Bridge stack: 2760 of 4096 bytes never used
+2026-11-05 15:00:03 I (197328) NETWORK: TCP keepalive: idle 5 s, interval 2 s, 3 probes
+2026-11-05 15:00:03 I (197328) NETWORK: TCP client connected: 192.168.1.58:33676
+2026-11-05 15:00:06 I (200358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 15:00:16 I (210358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 15:00:26 I (220358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 15:00:36 I (230358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 15:00:46 I (240358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 15:00:56 I (250358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 15:00:57 I (251628) BRIDGE: TCP client closed: disconnected by peer
+2026-11-05 15:00:57 I (251628) BRIDGE: Heap after session: 254292 bytes free, 223840 minimum ever
+2026-11-05 15:01:06 I (260358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 15:01:16 I (270358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 15:01:26 I (280358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
+2026-11-05 15:01:36 I (290358) LOSS: 10.0 s: no data loss: uart_rx_overflow=0 uart_rx_errors=0 tcp_send_failures=0 tcp_tx_bytes=0 uart_tx_bytes=0 | expected: session_bytes=0 no_client_bytes=0 | pressure: rx_buffer_full=0 | line: uart_breaks=0 | accounting: event_queue_drops=0 rx_error_pauses=0
