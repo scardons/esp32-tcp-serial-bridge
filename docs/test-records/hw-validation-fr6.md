@@ -47,7 +47,9 @@ The firmware was flashed and verified as recorded in [HW-VAL-009](hw-validation-
 | HW-FR6-002 | H3 | No lost, duplicated or altered byte across every value 0x00 to 0xFF (20,480 bytes) | E13 | PASS |
 | HW-FR6-003 | H4 | No loss, duplication or reordering over 256,000 bytes | E13, E14 | PASS |
 | HW-FR6-004 | H2 to H4 | No loss reported by the firmware during the transfers | E14 | PASS |
-| HW-FR6-005 | Not run | The same at 921600 (optional in FR-5) | None | NOT APPLICABLE until FR-5 allows it |
+| HW-FR6-005 | H2 to H4 at 921600 | The same at 921600 (optional in FR-5) | [921600 report](../test-reports/automated-test-results-921600-2026-11-05.md) | FAIL (optional): H3 lost 9 bytes and H4 20, reported as `uart_rx_overflow`. 921600 is not supported |
+| HW-FR6-006 | H2 to H4 at 115200 on the final firmware `7ffc134` | Regression | [report](../test-reports/automated-test-results-2026-11-05-fw7ffc134.md) | PASS, with the same SHA256 values as above |
+| HW-FR6-007 | NFR-3 soak | 33 sessions over 15 minutes, 10,264,320 bytes compared exactly | [VAL-NFR-003](validation-nfr3.md) | PASS |
 
 ### HW-FR6-001 to HW-FR6-003: Echo Integrity
 
@@ -91,11 +93,11 @@ H5 is expected to show this (see the README's Known Issues). It tests session is
 
 ## Status
 
-**FR-6: VALIDATED at 115200 8N1** (2026-11-05, firmware `ce94f6077`). In both directions together, no byte was lost, duplicated, altered or reordered, and the firmware reported no loss during the transfers.
+**FR-6: VALIDATED at 115200 8N1** (2026-11-05, firmware `ce94f6077` and the final `7ffc134`). In both directions together, no byte was lost, duplicated, altered or reordered: in H2 to H4, and over 10,264,320 bytes in the 15-minute soak. The firmware reported no loss during the transfers. The optional 921600 rate loses data and is not supported.
 
 ## Limitations
 
 1. Both directions are verified together, through the jumper. Each direction alone was not verified with an independent serial device.
-2. 921600 was not tested. It is optional in FR-5, and the baud rate is not yet configurable in menuconfig.
-3. The longest transfer was 256,000 bytes (about 22 s). No long soak test was run.
+2. At 921600 bytes are lost (HW-FR6-005), so FR-6 holds at 115200 only. 921600 is optional in FR-5 and is documented as not supported.
+3. The longest single transfer was 311,040 bytes (one soak session). The 15-minute soak sent 10,264,320 bytes in total.
 4. The E13 report does not name the firmware. It is identified by the serial log (E14).

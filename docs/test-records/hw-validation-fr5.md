@@ -7,8 +7,9 @@
 | Project | ESP32 TCP Serial Bridge |
 | Updated | 2026-11-05 |
 | Record prepared by | Claude Code, from the source code, build output and retained test evidence |
-| Implementation | Commit `c726a91` (`feat(uart): set the UART1 baud rate in menuconfig (FR-5)`) |
-| Status | **IMPLEMENTED, HARDWARE CHECK OF THE NEW FIRMWARE PENDING** |
+| Implementation | Commit `c726a91` (`feat(uart): set the UART1 baud rate in menuconfig (FR-5)`), Kconfig help corrected in `7ffc134` |
+| Firmware validated | Version `7ffc134`, ELF SHA256 `ae7ba8e58d739ca728c4e468d6e00e24bd2c2622ecb315bd66f916a0604a3259` |
+| Status | **VALIDATED at 115200** (921600 optional, not supported) |
 
 ## Purpose and Scope
 
@@ -37,6 +38,8 @@ Before `c726a91`, the baud rate was hardcoded (`#define BRIDGE_UART_BAUD_RATE 11
 | E13 | Test report | [automated-test-results-2026-11-05.md](../test-reports/automated-test-results-2026-11-05.md), firmware `ce94f6077` | H3 and H4 results |
 | E18 | Build output | `idf.py build` of `c726a91` at the default configuration | `CONFIG_BRIDGE_UART_BAUD_RATE=115200`, no warnings, ELF SHA256 `726621edd4d4ba94474d9cb1a58a1fabf95e5197578fe0d7f9222449093ac736` |
 | E19 | Build output | `idf.py build` of `c726a91` with `CONFIG_BRIDGE_UART_BAUD_RATE=921600` in a separate build directory | No warnings, ELF SHA256 `4fa276e49e6f70dcd84194d6b086cb6b36b37da1e2fc958778ef75385c23a016` |
+| E22 | Test report and serial log | [automated-test-results-2026-11-05-fw7ffc134.md](../test-reports/automated-test-results-2026-11-05-fw7ffc134.md), [2026-11-05_final-run_fwae7ba8e58.log](../evidence/2026-11-05_final-run_fwae7ba8e58.log), firmware `7ffc134` | 8 of 8 passed. Boot line `MAIN: UART1 initialized successfully: 115200 baud, 8N1, no flow control` |
+| E23 | Test report and serial log | [automated-test-results-921600-2026-11-05.md](../test-reports/automated-test-results-921600-2026-11-05.md), [2026-11-05_921600_fwc903d6e80.log](../evidence/2026-11-05_921600_fwc903d6e80.log), 921600 build of the same source (ELF `c903d6e8…`) | Boot line `921600 baud, 8N1, no flow control`. H2 passed, H3 and H4 failed |
 | E20 | Host tests | `bash tests/host/run.sh` (ASan and UBSan) on `c726a91` | FR-7 reporter at 200 ms 62/0 and at 10 s 59/0, bridge logic 90/0, FR-8 keepalive 25/0 |
 
 ## Test Summary
@@ -47,36 +50,38 @@ Before `c726a91`, the baud rate was hardcoded (`#define BRIDGE_UART_BAUD_RATE 11
 | HW-FR5-002 | 8N1 on the wire: 10 bits per byte at 115200 | E13 (H4: 11,509 bytes/s, where 8N1 allows 11,520 and 8E1 or 8N2 about 10,470) | PASS |
 | HW-FR5-003 | No hardware flow control | Code review (`UART_HW_FLOWCTRL_DISABLE`, RTS and CTS unassigned). On hardware, H2 to H4 passed with only TX and RX connected | PASS |
 | HW-FR5-004 | Baud rate set in menuconfig, default 115200 | E18, E19: the option exists, defaults to 115200, and the build follows it | PASS (build) |
-| HW-FR5-005 | The new firmware (E18) runs at the configured rate on hardware | Not yet run | PENDING |
-| HW-FR5-006 | Optional: works at 921600 | E19 builds. Not yet run on hardware | PENDING (optional) |
+| HW-FR5-005 | The firmware with the menuconfig option runs at the configured rate on hardware | E22: boot line shows 115200 8N1 with no flow control. H3 matched SHA256 for all 256 byte values. H4 matched SHA256 at 11,512 bytes/s | PASS |
+| HW-FR5-006 | Optional: works at 921600 | E23: the menuconfig value takes effect (boot line `921600 baud`) and H2 passes, but H3 lost 9 of 20,480 bytes and H4 20 of 256,000, with `uart_rx_overflow` reported | FAIL (optional): 921600 is not supported |
 
-## How to Close the Pending Tests
+## How to Run These Tests
 
-**HW-FR5-005 (automated, about 1 minute, no operator action):**
-1. Flash the E18 firmware.
-2. Check the boot log for `MAIN: UART1 initialized successfully: 115200 baud, 8N1, no flow control`.
+**HW-FR5-005:**
+1. Flash the firmware.
+2. Check the boot line `MAIN: UART1 initialized successfully: <baud> baud, 8N1, no flow control`.
 3. Run `BRIDGE_FIRMWARE=<ELF SHA256> BRIDGE_REPORT_PATH=docs/test-reports/<new file>.md npm test`.
 
 It passes when the boot line shows the configured rate and H1 to H5 pass.
 
-**HW-FR5-006 (optional, automated, about 10 minutes):**
-1. Flash the E19 firmware (921600).
-2. Run `BRIDGE_BAUD=921600 npm test -- -t "H[234]:"`.
-3. Flash the E18 firmware again.
+**HW-FR5-006 (another rate):**
+1. Set the rate in `idf.py menuconfig` → *TCP-Serial Bridge Configuration* → *UART Configuration* → *UART1 baud rate*, then build and flash.
+2. Run `BRIDGE_BAUD=<rate> npm test -- -t "H[234]:"`.
 
-It passes when H2 to H4 pass. The jumper loops UART1 to itself, so both ends always use the same rate.
+### Why 921600 Fails
 
-To change the rate for production, use `idf.py menuconfig` → *TCP-Serial Bridge Configuration* → *UART Configuration* → *UART1 baud rate*, then build and flash.
+The losses are counted as `uart_rx_overflow` while `rx_buffer_full=0`. So the 128-byte hardware FIFO overflowed before the driver emptied it; the 2,048-byte ring buffer never filled. At 921600 the FIFO fills in 1.4 ms, and the driver's default interrupt threshold leaves about 8 bytes, or 87 µs, of margin.
+
+Supporting 921600 would need the UART driver's interrupt configuration to be tuned, for example a lower RX full threshold or the ISR in IRAM. It was not attempted, because 921600 is optional in FR-5 and the change would affect the validated 115200 path. FR-7 detected and reported the loss on hardware.
 
 ## Status
 
-**FR-5: IMPLEMENTED; hardware check of the new firmware pending.**
-- **8N1 and no flow control** are shown on hardware.
-- **The menuconfig baud rate** is implemented and verified by build.
-- **HW-FR5-005**, the hardware run of the firmware that contains it, is the remaining required step.
-- **921600** is optional.
+**FR-5: VALIDATED at 115200** (firmware `7ffc134`):
+- UART1 runs at 8N1 with no hardware flow control;
+- the baud rate is set in menuconfig and defaults to 115200;
+- the firmware uses the configured value, as shown at 115200 and at 921600.
+
+The optional 921600 rate is **not supported**: it loses data under sustained traffic (HW-FR5-006), and the Kconfig help says so.
 
 ## Limitations
 
-1. HW-FR5-001 to 003 ran on `ce94f6077`, before `c726a91`. At 115200, `c726a91` keeps the same UART configuration and the same per-byte time.
+1. HW-FR5-001 to 003 ran on `ce94f6077`. HW-FR5-005 repeats H3 and H4 on `7ffc134` with the same results.
 2. The jumper cannot show the rate on the wire independently. The rate is inferred from the measured throughput.
