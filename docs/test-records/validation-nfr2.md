@@ -85,9 +85,9 @@ The lows were reached during `npm test` (H1 to H5), and none dropped further dur
 |---|---|---|
 | Heap regions at boot | 6 + 174 + 14 + 111 KiB of DRAM and D/IRAM (313,960 B), plus 77 KiB IRAM usable only for 32-bit or executable allocations | `heap_init:` boot lines |
 | Free heap at steady state, after each session | 253,856 to 254,292 B | 48 `Heap after session` samples |
-| Lowest free heap ever (peak use) | 239,252 B, during H4/H5 | `minimum ever` |
-| Dynamic use: ESP-IDF, lwIP, Ethernet, UART driver and task stacks | About 59,700 B at steady state and about 74,700 B at peak (313,960 B minus the values above) | Derived |
-| Headroom at peak use | About 239 KB free | |
+| Lowest free heap ever (peak use) | 239,252 B during H4/H5 and the soak. **223,840 B** when the Ethernet cable was pulled during a transfer (HW-FR7-004), while lwIP held the unsent data | `minimum ever`, [final run](../evidence/2026-11-05_final-run_fwae7ba8e58.log) and [link-loss run](../evidence/2026-11-05_fr7-004_link-loss_fwae7ba8e58.log) |
+| Dynamic use: ESP-IDF, lwIP, Ethernet, UART driver and task stacks | About 59,700 B at steady state, about 74,700 B at the normal peak and about 90,100 B at the link-loss peak (313,960 B minus the values above) | Derived |
+| Headroom at the highest peak observed | About 224 KB free. Free heap returned to 254,276 to 254,292 B after the link-loss session | |
 
 The application allocates no memory with `malloc` itself. Its dynamic memory is the 3 task stacks (11,264 B), the UART driver buffers (about 5.6 KB) and the queue. Everything else is ESP-IDF, lwIP and Ethernet.
 
@@ -97,7 +97,7 @@ The application allocates no memory with `malloc` itself. Its dynamic memory is 
 |---|---|---|---|---|
 | NFR2-001 | Buffer and stack sizes documented | Every buffer and task stack listed with its source | Tables above, and in the README | PASS |
 | NFR2-002 | Stack margins measured on hardware for the application tasks | Lowest unused value logged, above 512 B | 2,760, 2,952 and 2,028 B | PASS |
-| NFR2-003 | Heap budget documented from measurement | Steady-state and peak values from hardware | 253,856 to 254,292 B free, lowest 239,252 B | PASS |
+| NFR2-003 | Heap budget documented from measurement | Steady-state and peak values from hardware | 253,856 to 254,292 B free. Lowest 239,252 B in normal traffic and 223,840 B during a link loss with data in flight | PASS |
 
 ## Limitations
 
