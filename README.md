@@ -66,7 +66,7 @@ Requirement text from *ESP32 Serial-to-TCP Bridge: Requirements v1.0*. Each stat
 
 | Requirement | Missing evidence | How to close it |
 |---|---|---|
-| FR-7 | HW-FR7-006 (line errors) and HW-FR7-009 (break). 8 of the 11 plan tests have passed on hardware | 006 needs a 3.3 V USB-UART adapter on GPIO33 sending at a wrong baud rate, and 009 a resistor from GPIO33 to GND |
+| FR-7 | HW-FR7-006 (line errors), and with it the reporter-stack check after it (010). 9 of the 11 plan tests have passed on hardware | A 3.3 V USB-UART adapter on GPIO33, sending at a wrong baud rate. On UART1 looped to itself, TX and RX always share one rate, so this cannot be done in software |
 
 **Final firmware:** version `7ffc134`, ELF SHA256 `ae7ba8e58d739ca728c4e468d6e00e24bd2c2622ecb315bd66f916a0604a3259`. This build passed `npm test` and the NFR-3 soak on hardware.
 
@@ -113,6 +113,7 @@ The application allocates no heap memory itself. The bridge, server and reporter
 | `npm test`, H1 to H5 (2026-11-05, final) | `7ffc134` / `ae7ba8e58` | **PASS**, 8 of 8. Boot line `115200 baud, 8N1, no flow control`. H3 and H4 SHA256 match, H4 11,512 bytes/s | [report](docs/test-reports/automated-test-results-2026-11-05-fw7ffc134.md) |
 | NFR-3 soak, 15 min (2026-11-05) | `7ffc134` / `ae7ba8e58` | **PASS**, 33 of 33 sessions, 10,264,320 bytes verified, 0 resets, stable heap, no loss reported | [report](docs/test-reports/soak-2026-11-05T19-06-33-635Z.md), [log](docs/evidence/2026-11-05_final-run_fwae7ba8e58.log) |
 | HW-FR7-004, cable pulled during a transfer (2026-11-05) | `7ffc134` / `ae7ba8e58` | **PASS**: `W LOSS: DATA LOSS: ... tcp_tx_bytes=2308 ... uart_rx_overflow=18`, link and static IP restored after 51.9 s, the next 2 sessions verified, no reset | [log](docs/evidence/2026-11-05_fr7-004_link-loss_fwae7ba8e58.log) |
+| HW-FR7-009, UART break (2026-11-05) | Diagnostic build `28f96fb` / `42e1853cf` (branch `diag/fr7-break`) | **PASS**: 3 breaks, each reported as `uart_breaks=1`, with `uart_rx_errors=0`. `7ffc134` flashed back afterwards | [log](docs/evidence/2026-11-05_fr7-009_break_diag-fw42e1853cf.log) |
 | H2 to H4 at 921600 (2026-11-05) | 921600 build of `c8114ec` | **FAIL** (optional rate): H2 passed, H3 and H4 lost bytes, reported as `uart_rx_overflow` | [report](docs/test-reports/automated-test-results-921600-2026-11-05.md) |
 | `npm test`, H1 to H5 (2026-11-05) | `ce94f6077` | **PASS**, 8 of 8. H3 and H4 SHA256 match, H4 11,509 bytes/s. H6 skipped | [automated-test-results-2026-11-05.md](docs/test-reports/automated-test-results-2026-11-05.md) |
 | H9, 5 cycles (2026-11-05) | `ce94f6077` | **PASS**: 9 outages of 4.0 s to 109.9 s, static IP restored 9 of 9, no reset, all `LOSS:` reports at zero. Worst client acceptance 6.8 s from the operator's Enter | [H9 report](docs/test-reports/manual-h9-2026-11-05T14-51-27-137Z.md) |
@@ -133,7 +134,7 @@ The 2026-11-05 `npm test` and H6 reports don't name the firmware, because `BRIDG
 - **`LOSS:` lines report detected loss only.** "No data loss" can appear after an abnormal session, because data held in lwIP buffers isn't visible to the firmware. Data still held by UART1 is counted.
 - **H5 can end either way.** The close races with the echo, so the report may or may not show loss, and `tcp_send_failures` may be 0 or 1. Only the isolation result matters for H5.
 - **Frame-error storms are capped.** Above 2,000 frame errors and breaks in one interval, their interrupts pause until the next report, and `rx_error_pauses` shows it. The counts for that interval are a lower bound.
-- **Not verified on hardware:** FR-7's line-error and break cases (HW-FR7-006, 009), and a timestamped measurement of half-open detection time (FR-8).
+- **Not verified on hardware:** FR-7's line-error case (HW-FR7-006), and a timestamped measurement of half-open detection time (FR-8).
 - **Test method:** the jumper loops UART1 to itself, so the two directions are verified together, and UART1 was never observed with a logic analyzer. `network.c` has no host tests; it is covered by hardware tests.
 
 ## Potential Improvements
@@ -144,7 +145,7 @@ The 2026-11-05 `npm test` and H6 reports don't name the firmware, because `BRIDG
 - **Access control:** an IP allowlist, or TLS for clients outside a trusted network.
 - **Watchdog:** subscribe the `bridge` task to the task watchdog. It is not subscribed today.
 - **CI:** run the host tests (ASan, UBSan, TSan) and `idf.py build` on every push.
-- **Test automation:** a USB-controlled Ethernet switch to automate H7 to H9, and a logic analyzer or a USB-UART adapter to verify each UART direction separately and to run HW-FR7-006 and 009.
+- **Test automation:** a USB-controlled Ethernet switch to automate H7 to H9, and a logic analyzer or a USB-UART adapter to verify each UART direction separately and to run HW-FR7-006.
 
 ## Hardware
 
