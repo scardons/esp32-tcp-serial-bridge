@@ -193,6 +193,33 @@ I (546636) BRIDGE: TCP client closed: socket error
 I (546746) NETWORK: TCP client connected: 192.168.1.170:60090
 ```
 
+### How to Run These Tests
+
+**Before you start**
+
+1. Flash the firmware, and note the ELF SHA256 from the `MAIN: Firmware:` boot line.
+2. Open the serial monitor and save its log: `idf.py -p /dev/ttyUSB1 monitor --timestamps | tee fr2-test.log`.
+3. Close any other TCP client, because the bridge accepts only one.
+
+**Manual run (HW-FR2-001 to HW-FR2-007).** Use two terminals on the PC:
+
+| Test | How to run it | What to check in the serial log | Passes when |
+|---|---|---|---|
+| HW-FR2-001 | `nc -vz -w 3 192.168.1.200 4001` | `NETWORK: TCP server listening on port 4001` at boot | `nc` reports the port open |
+| HW-FR2-002 | Terminal A: `nc -v 192.168.1.200 4001`, and keep it open | `NETWORK: TCP client connected: <PC IP>:<port>` | A is connected |
+| HW-FR2-003 and 004 | Terminal B: `nc -v 192.168.1.200 4001` while A is open | `W NETWORK: TCP client <PC IP>:<port> rejected: a client is already connected` | B is closed at once, and A still echoes what you type |
+| HW-FR2-005 and 006 | Close A with Ctrl+C | `BRIDGE: TCP client closed: disconnected by peer` and `BRIDGE: Heap after session: ...` | The session ends cleanly |
+| HW-FR2-007 | Terminal B: `nc -v 192.168.1.200 4001` again, without resetting the ESP32 | A new `TCP client connected` line, and no boot banner | B is accepted |
+
+**Automated run (HW-FR2-008 to HW-FR2-013).** H1 covers HW-FR2-008 to 012, and H5 covers HW-FR2-013:
+
+```bash
+BRIDGE_FIRMWARE=<ELF SHA256> BRIDGE_REPORT_PATH=docs/test-reports/<new file>.md npm test -- -t "H1:"
+BRIDGE_FIRMWARE=<ELF SHA256> BRIDGE_REPORT_PATH=docs/test-reports/<new file>.md npm test -- -t "H5:"
+```
+
+`-t` runs only the tests whose name matches. Without `BRIDGE_REPORT_PATH`, the run overwrites `docs/test-reports/automated-test-results.md`. A test passes when Jest shows it as passed **and** the serial log shows the matching connections, rejection and close, with no reset.
+
 ## 6. Troubleshooting Note
 
 Before the FR-2 tests, a connection to port 4001 returned `Connection refused`. The board was still running the Ethernet build, `6f7d38aea`, which has no TCP server. Flash attempts around 12:42 and 12:44 had failed (E3), and their cause was not recorded in the portion reviewed. The flash at 12:53:18 succeeded, and E2 confirms that the board booted the TCP server build. This was a deployment issue, not a firmware defect.

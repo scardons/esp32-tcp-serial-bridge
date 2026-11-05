@@ -32,9 +32,9 @@ Requirement text from *ESP32 Serial-to-TCP Bridge: Requirements v1.0*.
 | FR-6 | No lost, duplicated or reordered bytes in either direction, at those baud rates | Pending | Not defined | [FR-6](docs/test-records/hw-validation-fr6.md) |
 | FR-7 | Data loss that cannot be avoided is detected, counted and reported on UART0 every 10 s | **Pending** | Host tests, HW-FR7-001 to 011 | [FR-7](docs/test-records/hw-validation-fr7.md) |
 | FR-8 | A client that disconnects or times out, including a half-open connection, is detected within 30 s and its resources are freed | Partial | H6, H7, H8 | [FR-8](docs/test-records/hw-validation-fr8.md) |
-| FR-9 | Recover from an Ethernet cable reconnection without a reboot | Partial | H9 | [H9 report](docs/test-reports/manual-h9-2026-11-05T14-51-27-137Z.md) |
+| FR-9 | Recover from an Ethernet cable reconnection without a reboot | Partial | H9 | [FR-9](docs/test-records/hw-validation-fr9.md) |
 
-The status comes from the records in [`docs/test-records/`](docs/test-records/), and for FR-9 from the H9 report, because FR-9 has no record yet. The FR-3 and FR-4 records don't yet cite the automated run below. The FR-5 and FR-6 records predate the requirement text above.
+The status comes from the records in [`docs/test-records/`](docs/test-records/). The FR-3 and FR-4 records don't yet cite the automated run below. The FR-5 and FR-6 records predate the requirement text above.
 
 **Latest automated run:** H1 to H5 passed on firmware `23f991546`, and H4 measured 11,517 bytes/s with matching SHA256 hashes. See [the report](docs/test-reports/automated-test-results.md). H6 also passed, but [its report](docs/test-reports/automated-test-results-h6.md) doesn't identify the firmware. That build predates FR-7, so these results don't cover the current code. Firmware `f10f8b076` (FR-7 before the audit corrections) has no hardware results.
 

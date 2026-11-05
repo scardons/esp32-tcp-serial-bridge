@@ -105,6 +105,32 @@ I (788826) NETWORK: TCP client connected: 192.168.1.170:63664
 
 Not run. With the ESP32 link kept up and the client removed, the expected result is `TCP client receive failed` after about 12 s, followed by a successful new connection.
 
+## How to Run These Tests
+
+**Before you start**
+
+1. Flash the firmware, and note the ELF SHA256 from the `MAIN: Firmware:` boot line.
+2. Connect the GPIO32 to GPIO33 jumper.
+3. Open the serial monitor and save its log: `idf.py -p /dev/ttyUSB1 monitor --timestamps | tee fr8-test.log`.
+4. Close any other TCP client.
+
+| Test | How to run it | What to check in the serial log | Passes when |
+|---|---|---|---|
+| HW-FR8-001 and 002 | `BRIDGE_FIRMWARE=<ELF SHA256> npm run manual:h7`, following its prompts | `Ethernet link down (#n)`, `TCP client receive failed: errno 113` and `TCP client closed: socket error` (or `disconnect requested`), then `IPv4 ready: 192.168.1.200, ...` and `Static IP restored after link recovery (#n)` | The session closes with no reset, and the static IP returns |
+| HW-FR8-003 | Same H7 run. The script connects a new client after the link returns | A new `TCP client connected` after `Static IP restored` | The script reports the new client and its echo as PASS, and the log shows the connection |
+| HW-FR8-004 | `BRIDGE_FIRMWARE=<ELF SHA256> npm run manual:h8` (the cable stays out more than 2 minutes) | The same lines as H7. After about 120 s: `ESP-NETIF lost-IP event during outage #n (...). Static IP 192.168.1.200 kept for reconnection` | The static IP returns and a new client is accepted, with no `static configuration was not kept` |
+| HW-FR8-005 | `npm run test:h6` | `TCP client closed: client stalled`, then a new `TCP client connected` | The stalled client is closed and the slot is released |
+| HW-FR8-006 | See the half-open procedure below | `TCP client receive failed`, `TCP client closed: socket error` and `Heap after session` | The session closes **within 30 s** of the client going silent, and a new client is then accepted |
+
+**Half-open procedure (HW-FR8-006).** The ESP32 keeps its link, and the client stops answering without closing:
+
+1. Connect a client: `nc -v 192.168.1.200 4001`, and type a line to check the echo.
+2. In another terminal, make the PC drop everything from the ESP32: `sudo iptables -I INPUT -s 192.168.1.200 -j DROP`. Note the time.
+3. Wait up to 30 s, watching the serial log. With the logged keepalive (`idle 5 s, interval 2 s, 3 probes`), the session should close after about 11 s.
+4. Remove the rule: `sudo iptables -D INPUT -s 192.168.1.200 -j DROP`. Close `nc`, then connect again to confirm the slot is free.
+
+While the rule is in place, ping to the ESP32 also fails. Remove the rule before running other tests.
+
 ## Status
 
 **FR-8: PARTIAL.** Link loss with an active client was handled safely on hardware. Reconnection after link return, the long outage and half-open detection are not verified.

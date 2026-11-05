@@ -38,6 +38,38 @@ The plan covers the firmware with the P0 audit corrections: frame errors (M1), e
 
 H5 closes its first client abruptly. Depending on which reaches the bridge first, the RST is seen by `recv()`, which ends the session as `socket error`, or by `send()`, which also counts `tcp_send_failures=1`. Either way, any bytes in flight count as loss. Only the isolation result decides H5. This matches the README.
 
+## How to Run These Tests
+
+**Host tests (no ESP32 needed):**
+
+```bash
+npm run test:host                 # ASan and UBSan, including the real 10 s report period, about 3 minutes
+bash tests/host/run.sh quick      # faster, without sanitizers
+bash tests/host/run.sh tsan       # ThreadSanitizer
+```
+
+They pass when the script ends with every check passing. Run them on an idle machine, because the timing checks can fail under load.
+
+**Hardware tests (HW-FR7-001 to 011):**
+
+1. Flash the firmware. On the PC, run `sha256sum build/tcp_serial_bridge.elf` for HW-FR7-011.
+2. Open the serial monitor and save its log: `idf.py -p /dev/ttyUSB1 monitor --timestamps | tee fr7-test.log`. Every FR-7 result is read from this log.
+3. Run the procedure in the table above for each test. The commands are:
+   - HW-FR7-002 and 007: `BRIDGE_FIRMWARE=<ELF SHA256> BRIDGE_REPORT_PATH=docs/test-reports/<new file>.md npm test`.
+   - HW-FR7-003 and 008: `npm run test:h6`.
+   - HW-FR7-004: run `npm test -- -t "H4:"` and pull the cable while it runs.
+   - HW-FR7-005, 006 and 009: remove the jumper, and feed GPIO33 from a 3.3 V USB-UART adapter, for example `picocom -b 115200 /dev/ttyUSB<n>` (`-b 57600` for HW-FR7-006).
+4. Pull the results out of the log:
+
+```bash
+grep "LOSS:" fr7-test.log                          # every report
+grep "LOSS:" fr7-test.log | grep -v "no data loss" # only reports with loss or attention fields
+grep -E "W \([0-9]+\) LOSS:|Reporter stack" fr7-test.log
+grep "MAIN: Firmware:" fr7-test.log                # HW-FR7-011
+```
+
+Each test passes when its `LOSS:` lines show the values in the "Expected" column above.
+
 ## Status
 
 **FR-7: PENDING.** Implemented and tested on the PC only.

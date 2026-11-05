@@ -115,6 +115,30 @@ I (457116) BRIDGE: TCP client closed: disconnected by peer
 
 **Evidence needed to close this test:** the terminal output of the script (`igual: True`). The serial log cannot show payload content.
 
+## How to Run These Tests
+
+**Before you start**
+
+1. Flash the firmware, and note the ELF SHA256 from the `MAIN: Firmware:` boot line.
+2. Connect the GPIO32 to GPIO33 jumper. Without it, every echo test fails.
+3. Open the serial monitor and save its log: `idf.py -p /dev/ttyUSB1 monitor --timestamps | tee fr3-test.log`.
+4. Close any other TCP client.
+
+| Test | How to run it | What to check | Passes when |
+|---|---|---|---|
+| HW-FR3-001 | `BRIDGE_FIRMWARE=<ELF SHA256> BRIDGE_REPORT_PATH=docs/test-reports/<new file>.md npm test -- -t "H2:"` | Jest output and the report | Both H2 tests pass: the text returns unchanged and in order |
+| HW-FR3-002 | Same, with `-t "H3:"` | Jest output, plus the session lines in the serial log | 20,480 bytes covering 0x00 to 0xFF return unchanged |
+| HW-FR3-003 | Same, with `-t "H4:"` | Jest output, plus the `LOSS:` lines in the serial log | 256,000 bytes return unchanged and in order, at about 11,520 bytes/s, and `LOSS:` shows `no data loss` |
+
+Keep the generated report and the serial log. HW-FR3-002 and 003 are PARTIAL only because no Jest output was retained, so rerunning them with a saved report closes them.
+
+**Testing FR-3 on its own (optional).** With the jumper, a test cannot tell whether a byte failed on UART1 TX or on RX. To check TX alone:
+1. Remove the jumper, and connect GPIO32 to the RX pin of a 3.3 V USB-UART adapter, with a common ground.
+2. Open the adapter at 115200 8N1, for example `picocom -b 115200 /dev/ttyUSB<n>`.
+3. Run `nc -v 192.168.1.200 4001` and type text.
+
+The text must appear in the adapter terminal unchanged.
+
 ## Status
 
 **FR-3: PARTIAL.** Session timing and the absence of watchdog errors are consistent with correct operation, but payload integrity has no retained evidence.

@@ -256,6 +256,31 @@ I (864976) esp_netif_handlers: eth ip: 192.168.1.200, mask: 255.255.255.0, gw: 1
 I (864976) NETWORK: IPv4 ready: 192.168.1.200, mask 255.255.255.0, gateway 192.168.1.1
 ```
 
+### How to Run These Tests
+
+**Before you start**
+
+1. Flash the firmware with `idf.py -p /dev/ttyUSB1 flash`, and note the ELF SHA256 from the `MAIN: Firmware:` boot line.
+2. Open the serial monitor and save its log: `idf.py -p /dev/ttyUSB1 monitor --timestamps | tee fr1-test.log`. Press Ctrl+T then Ctrl+R to reset the board and capture a full boot.
+3. Connect the ESP32 Ethernet port to the test network, and use a PC on `192.168.1.0/24`.
+
+| Test | How to run it | What to check | Passes when |
+|---|---|---|---|
+| HW-FR1-001 | Reset the board and watch the boot log | `NETWORK: Ethernet driver installed, PHY address 1`, then `NETWORK: Ethernet started` | Both lines appear, with no `E (` line |
+| HW-FR1-002 | Same boot log. Compare it with `grep CONFIG_BRIDGE_ETH sdkconfig`, or with `idf.py menuconfig` → *TCP-Serial Bridge Configuration* | `NETWORK: IPv4 ready: 192.168.1.200, mask 255.255.255.0, gateway 192.168.1.1` | The address, mask and gateway match `CONFIG_BRIDGE_ETH_IP`, `_NETMASK` and `_GATEWAY`, with no `IPv4 does not match the static configuration` |
+| HW-FR1-003 | Same boot log | `NETWORK: Ethernet link up: 100 Mbps, full duplex` | Speed and duplex as shown |
+| HW-FR1-004 | On the PC: `ping -c 4 192.168.1.200` | The ping summary | `0% packet loss` |
+| HW-FR1-005 | Pull the cable at the ESP32 for at least 10 s, then reconnect it | `W NETWORK: Ethernet link down (#n)`, then `Ethernet link up` and `Ethernet link restored after <x.x> s outage (#n)` | Both events appear for the same `#n`, with no reset |
+| HW-FR1-006 | Same outage, or run `npm run manual:h7` | After the link returns: `IPv4 ready: 192.168.1.200, ...` and `Static IP restored after link recovery (#n)`, then `ping -c 4 192.168.1.200` | The same static address returns and the ping succeeds |
+| HW-FR1-007 | Reset the board, then on the PC run `sha256sum build/tcp_serial_bridge.elf` | `MAIN: Firmware: ... ELF SHA256 <first 9 characters>` and `NETWORK: TCP server listening on port 4001` | The SHA256 prefix matches the flashed ELF, and the boot has no `E (`, panic or watchdog line |
+| HW-FR1-008 | Pull the cable for more than 60 s, then reconnect it. To also test the ESP-NETIF lost-IP timer, pull it for more than 120 s (see [FR-9](hw-validation-fr9.md)) | Same lines as HW-FR1-006. The firmware prints the outage length in `link restored after <x.x> s` | The static IP returns after the long outage |
+
+To pull the boot and recovery lines out of a saved log:
+
+```bash
+grep -E "Ethernet (started|link)|IPv4 ready|Static IP|does not match|rst:|Guru|panic" fr1-test.log
+```
+
 ## 6. Final Status
 
 | Requirement | Status | Basis |
