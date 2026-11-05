@@ -21,30 +21,58 @@ TCP client  <---- port 4001 ---->  ESP32  <---- TX GPIO32 / RX GPIO33 ---->  Ser
 
 ## Requirements Status
 
-Requirement text from *ESP32 Serial-to-TCP Bridge: Requirements v1.0*.
+Requirement text from *ESP32 Serial-to-TCP Bridge: Requirements v1.0*. Each status comes from the hardware validation record linked in the last column, and every **Validated** status cites hardware evidence there.
+
+### Functional Requirements
 
 | Requirement | Description | Hardware status | Tests | Record |
 |---|---|---|---|---|
-| FR-1 | Connect over Ethernet with a static IPv4 address, netmask and gateway set in menuconfig. No DHCP | **Validated** | H7, H8, ping | [FR-1](docs/test-records/hw-validation-fr1.md) |
-| FR-2 | TCP server on port 4001, with at most one active client at a time | **Validated** | H1 | [FR-2](docs/test-records/hw-validation-fr2.md) |
+| FR-1 | Connect over Ethernet with a static IPv4 address, netmask and gateway set in menuconfig. No DHCP | **Validated** | Boot log, ping, H7, H8, H9 | [FR-1](docs/test-records/hw-validation-fr1.md) |
+| FR-2 | TCP server on port 4001, with at most one active client at a time | **Validated** | H1, H5, manual `nc` | [FR-2](docs/test-records/hw-validation-fr2.md) |
 | FR-3 | Bytes received from the client are transmitted on UART1 TX (GPIO32) | **Validated** | H2, H3, H4 | [FR-3](docs/test-records/hw-validation-fr3.md) |
 | FR-4 | Bytes received on UART1 RX (GPIO33) are sent to the client | **Validated** | H2 to H6 | [FR-4](docs/test-records/hw-validation-fr4.md) |
-| FR-5 | UART1 at 8N1, no hardware flow control, baud rate set in menuconfig (default 115200, optionally 921600) | Implemented, hardware test pending | Code review, H3, H4 (8N1 at 115200) | [FR-5](docs/test-records/hw-validation-fr5.md) |
+| FR-5 | UART1 at 8N1, no hardware flow control, baud rate set in menuconfig (default 115200, optionally 921600) | Implemented, hardware check pending | H3, H4 (8N1), build at 115200 and 921600 | [FR-5](docs/test-records/hw-validation-fr5.md) |
 | FR-6 | No lost, duplicated or reordered bytes in either direction, at those baud rates | **Validated** at 115200 | H2, H3, H4 | [FR-6](docs/test-records/hw-validation-fr6.md) |
 | FR-7 | Data loss that cannot be avoided is detected, counted and reported on UART0 every 10 s | Partial | Host tests, HW-FR7-001 to 011 | [FR-7](docs/test-records/hw-validation-fr7.md) |
-| FR-8 | A client that disconnects or times out, including a half-open connection, is detected within 30 s and its resources are freed | Partial | H6, H7, H8 | [FR-8](docs/test-records/hw-validation-fr8.md) |
-| FR-9 | Recover from an Ethernet cable reconnection without a reboot | Partial | H9 | [FR-9](docs/test-records/hw-validation-fr9.md) |
+| FR-8 | A client that disconnects or times out, including a half-open connection, is detected within 30 s and its resources are freed | **Validated** | H6, H7, H8, H9, [TR-FR8-002](docs/testing/FR-8-TEST-REPORT.md) (keepalive, RST, idle, half-open, soak, pending data) | [FR-8](docs/test-records/hw-validation-fr8.md) |
+| FR-9 | Recover from an Ethernet cable reconnection without a reboot | **Validated** | H9 (9 outages, 4 s to 110 s), H8 (216 s outage) | [FR-9](docs/test-records/hw-validation-fr9.md) |
 
-The status comes from the records in [`docs/test-records/`](docs/test-records/). FR-3, FR-4 and FR-6 are verified through the GPIO32 to GPIO33 jumper at 115200 8N1. FR-5's menuconfig baud rate option (`CONFIG_BRIDGE_UART_BAUD_RATE`, default 115200) is implemented and builds at 115200 and 921600, with the host tests passing. Its hardware run on the new firmware is pending.
+**What is still open:**
 
-**Latest automated run:** H1 to H5 passed on firmware `ce94f6077` (2026-11-05), with matching SHA256 hashes in H3 and H4, and H4 measured 11,509 bytes/s. See [the report](docs/test-reports/automated-test-results-2026-11-05.md). Its `Firmware` field is empty, because `BRIDGE_FIRMWARE` was not set, so the firmware is identified from the serial log of the same boot. H6 was skipped in this run. It last passed on older firmware, and [its report](docs/test-reports/automated-test-results-h6.md) doesn't identify the firmware. The previous run, on `0da27aa`, is kept in [automated-test-results.md](docs/test-reports/automated-test-results.md).
+| Requirement | Missing evidence | How to close it |
+|---|---|---|
+| FR-5 | The firmware with the menuconfig option (`c726a91`) has not yet run on hardware | Flash it, check the `UART1 initialized successfully: 115200 baud, 8N1, no flow control` boot line, and run `npm test` (automated, about 1 minute). 921600 is optional |
+| FR-7 | HW-FR7-004 (link loss with data in flight), HW-FR7-006 (line errors) and HW-FR7-009 (break). 7 of the 11 plan tests have passed on hardware | Pull the cable during H4 (about 1 minute). 006 needs a USB-UART adapter on GPIO33, and 009 a resistor from GPIO33 to GND |
 
-**Latest manual run (H9, FR-9):** on firmware `ce94f6077`, the bridge recovered from 9 Ethernet outages of 4.0 s to 109.9 s without a reset. It restored the static IP every time, and every `LOSS:` report showed zero. All 5 cycles passed. In cycles 2 to 5, a client was accepted within 6.8 s, measured from the operator's Enter. The result is PASS for the scenarios exercised: no outage exceeded 120 s, so the ESP-NETIF lost-IP path is untested, and the time from physical reconnection was not reliably measured. See [the H9 report](docs/test-reports/manual-h9-2026-11-05T14-51-27-137Z.md).
+**Notes on the evidence:**
+- **The jumper.** FR-3, FR-4 and FR-6 are verified through the GPIO32 to GPIO33 jumper at 115200 8N1, so the two directions are verified together.
+- **FR-8 half-open timing.** The 30 s limit rests on the keepalive configuration read back on hardware (at most about 11 s) and the operator's observation of about 9 s. No timestamped measurement was retained (see the record).
+- **FR-8 and FR-9 firmware.** Their evidence ran on three firmware builds (`23f991546`, `8d79dbe83` and `ce94f6077`). The code each test exercises is unchanged between that build and the current source, as each record explains.
+
+### Non-Functional Requirements
+
+NFR-1 to NFR-5 are defined in *Requirements v1.0*, but their text is not yet in this repository, so they have not been assessed. None is claimed as validated.
+
+### Latest Results
+
+| Run | Firmware | Result | Report |
+|---|---|---|---|
+| `npm test`, H1 to H5 (2026-11-05) | `ce94f6077` | **PASS**, 8 of 8. H3 and H4 SHA256 match, H4 11,509 bytes/s. H6 skipped | [automated-test-results-2026-11-05.md](docs/test-reports/automated-test-results-2026-11-05.md) |
+| H9, 5 cycles (2026-11-05) | `ce94f6077` | **PASS**: 9 outages of 4.0 s to 109.9 s, static IP restored 9 of 9, no reset, all `LOSS:` reports at zero. Worst client acceptance 6.8 s from the operator's Enter | [H9 report](docs/test-reports/manual-h9-2026-11-05T14-51-27-137Z.md) |
+| `npm run test:h6`, H6 (2026-11-05) | `ce94f6077` | **PASS**, 5 of 5. `client stalled` after 7.0 s, then `LOSS:` reported `tcp_send_failures=1`, `tcp_tx_bytes=2260` and `uart_rx_overflow=247`, and a new client was accepted | [automated-test-results-h6-2026-11-05.md](docs/test-reports/automated-test-results-h6-2026-11-05.md) |
+| FR-8 test series (2026-11-04) | `8d79dbe83` | Keepalive, RST, 300 s idle, half-open detection, 200-cycle soak and pending data all observed. The report marks half-open timing as inconclusive (no timestamps) | [TR-FR8-002](docs/testing/FR-8-TEST-REPORT.md) |
+| H8, 216 s outage (2026-11-02) | `23f991546` | Static IP restored, new client accepted, no reset | [log](docs/evidence/2026-11-02_h8_fw23f991546.log) |
+| Host tests (2026-11-05) | Source `c726a91` | **PASS**: FR-7 62/0 and 59/0, bridge 90/0, FR-8 keepalive 25/0 | `bash tests/host/run.sh` |
+| `npm test`, H1 to H5 (2026-11-03) | `0da27aa` | PASS | [automated-test-results.md](docs/test-reports/automated-test-results.md) |
+
+The 2026-11-05 `npm test` and H6 reports don't name the firmware, because `BRIDGE_FIRMWARE` was not set. It is identified from the serial log of the same boot. The serial logs behind these results are kept in [`docs/evidence/`](docs/evidence/).
 
 ### Known Issues
 
 - **`LOSS:` lines report detected loss only.** "No data loss" can appear after an abnormal session, because data held in lwIP buffers isn't visible to the firmware. Data still held by UART1 is counted.
 - **H5 can end either way.** The close races with the echo, so the report may or may not show loss, and `tcp_send_failures` may be 0 or 1. Only the isolation result matters for H5.
+- **921600 is not yet tested on hardware.** It builds, but FR-5 and FR-6 are only shown at 115200.
+- **The FR-7 line-error and break counters** have only been exercised by the host tests.
 - **Frame-error storms are capped.** Above 2,000 frame errors and breaks in one interval, their interrupts pause until the next report, and `rx_error_pauses` shows it. The counts for that interval are a lower bound.
 
 ## Hardware
@@ -81,7 +109,7 @@ There are three levels. Only the last two run against the board, and only result
 |---|---|---|
 | Host tests | Real firmware source built for the PC, against mocks | No |
 | Automated integration tests | The running bridge, over TCP (H1 to H6) | Yes |
-| Manual tests | Ethernet cable disconnection (H7, H8, H9) and the FR-7 hardware plan | Yes |
+| Manual tests | Ethernet cable disconnection (H7, H8, H9), FR-8 half-open and RST tests, and the FR-7 hardware plan | Yes |
 
 ### Setup
 
@@ -110,9 +138,13 @@ For tests on the board:
 | FR-8 | Manual iptables, RST, idle, soak and pending-data tests ([FR-8 test report](docs/testing/FR-8-TEST-REPORT.md)) | A half-open client ends with `errno 113` within 30 s, a RST with `errno 104`, and a new client is accepted |
 | FR-1, FR-8 | `npm run manual:h7` | The client session ends safely when the cable is pulled, and the bridge recovers |
 | FR-1, FR-8 | `npm run manual:h8` | Same as H7, with an outage longer than 2 minutes |
-| FR-9 | `npm run manual:h9` | Every cycle recovers without a reboot, with a client accepted within 10 s of reconnection (project criterion) |
+| FR-5 | Boot log, then `npm test` (H3, H4) | The boot line shows the menuconfig baud rate with 8N1 and no flow control, and H4's rate matches it. For another rate, set it in menuconfig and run with `BRIDGE_BAUD=<rate>` |
+| FR-6 | `npm test` (H2, H3, H4) | Byte counts and SHA256 match, in order, with no `LOSS:` line reporting loss |
+| FR-9 | `npm run manual:h9`, and `H9_OUTAGE_S=130 npm run manual:h9 -- 1` for an outage past the 120 s lost-IP timer | Every cycle recovers without a reboot, with a client accepted within 10 s of reconnection (project criterion) |
 | FR-7 | `npm run test:host` | All host checks pass |
 | FR-7 | [Hardware plan](docs/test-records/hw-validation-fr7.md) | Each HW-FR7 result is recorded from the UART0 log |
+
+Each record in `docs/test-records/` has a *How to Run These Tests* section with the exact commands, what to check in the serial log, and the pass criteria for every test.
 
 The tests can't verify FR-3 and FR-4 separately, because the jumper connects them. The Jest suite can't verify FR-7, because reports appear only on UART0.
 
@@ -157,7 +189,7 @@ RUN_H6=true BRIDGE_FIRMWARE=<ELF SHA256> BRIDGE_REPORT_PATH=docs/test-reports/<n
 | `FAIL` | A test ran and the bridge didn't meet its expected result |
 | `BLOCKED` | Nothing was tested, because the ESP32 is unreachable or another client holds the slot |
 
-The host and port can be changed with `BRIDGE_HOST` and `BRIDGE_PORT`. For the full test guide, see [`tests/README.md`](tests/README.md).
+The host and port can be changed with `BRIDGE_HOST` and `BRIDGE_PORT`, and the expected UART rate with `BRIDGE_BAUD` (default 115200). For the full test guide, see [`tests/README.md`](tests/README.md).
 
 ## Project Layout
 
@@ -166,7 +198,7 @@ main/
   main.c              Startup order, optional UART loopback test
   bridge/             Bridge task, loss counters and loss reporter
   network/            Ethernet, static IP and TCP server
-  uart/               UART1 driver wrapper
+  uart/               UART1 driver wrapper (baud rate from menuconfig)
 tests/
   host/               Firmware logic on the PC, with mocks
   integration/        H1 to H6 over TCP
@@ -174,7 +206,8 @@ tests/
   support/            Shared client, configuration and report generator
 docs/
   fr7-data-loss-reporting.md   FR-7 design
-  test-records/       Hardware validation record for each requirement
-  test-reports/       Test results and manual procedures
+  test-records/       Hardware validation record for each requirement, with how to run its tests
+  test-reports/       Generated test reports and manual procedures
   testing/            Per-requirement test reports (FR-8)
+  evidence/           Serial logs cited by the records
 ```

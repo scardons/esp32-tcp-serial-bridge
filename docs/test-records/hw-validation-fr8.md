@@ -3,12 +3,13 @@
 | Field | Value |
 |---|---|
 | Record ID | HW-VAL-008 |
-| Requirement | FR-8: Text not available in this repository. Project notes state that it covers half-open connection detection and Ethernet disconnection scenarios. |
+| Requirement | FR-8: The device shall detect a client that disconnects or times out, including a half-open connection, within 30 seconds, and shall free any allocated resources. (*Requirements v1.0*) |
 | Project | ESP32 TCP Serial Bridge |
 | Test date | 2026-11-02 (UTC-5) |
 | Tested by | Project operator |
 | Record prepared by | Claude Code, from retained logs |
 | Base commit | `78290c9`, with uncommitted changes (`78290c9-dirty`) |
+| Updated | 2026-11-05: adds the FR-8 test report (TR-FR8-002, firmware `8d79dbe83`), the H8 log (216 s outage) and H9 (firmware `ce94f6077`). FR-8 code is unchanged between `63cbb71` and the current source |
 
 ## Purpose and Scope
 
@@ -43,16 +44,32 @@ The log does not label tests. Each session was matched to a planned test by orde
 
 The E7 session shows no reset after boot, and no `task_wdt`, panic, backtrace or `E (` error lines.
 
+Evidence added on 2026-11-05:
+
+| ID | Type | Source | Notes |
+|---|---|---|---|
+| R1 | Test report | [TR-FR8-002](../testing/FR-8-TEST-REPORT.md), firmware `63cbb71` / `8d79dbe83` | Keepalive, RST, idle, half-open, soak and pending-data tests, with their own evidence (E1 to E3, O1 to O4). Logs preserved in [`docs/evidence/`](../evidence/) |
+| E15 | Captured serial log | [2026-11-02_h8_fw23f991546.log](../evidence/2026-11-02_h8_fw23f991546.log), firmware `23f991546` | One boot, no reset, no `E (`, panic or watchdog line. Contains a 216 s link outage |
+| E16 | Captured serial log and report | [2026-11-05_h9-and-npm-test_fwce94f6077.log](../evidence/2026-11-05_h9-and-npm-test_fwce94f6077.log) and the [H9 report](../test-reports/manual-h9-2026-11-05T14-51-27-137Z.md), firmware `ce94f6077` | 9 link outages and 5 sessions cut by them. See [HW-VAL-009](hw-validation-fr9.md) |
+
+`git diff 63cbb71 HEAD` shows no change in `main/bridge/`, `main/uart/` or `main/network/client_socket.c`, so R1's results apply to the current FR-8 code. The only `network.c` change since then is FR-9 logging.
+
 ## Test Summary
 
 | Test ID | Plan | Test | Evidence | Result |
 |---|---|---|---|---|
 | HW-FR8-001 | H7 | Ethernet disconnection with a client connected | E7 | PASS |
 | HW-FR8-002 | H7 | Static IP restored after link return | E7 | PASS |
-| HW-FR8-003 | H7 | New TCP client accepted after link return | None retained | NOT VERIFIED |
-| HW-FR8-004 | H8 | Outage longer than 2 minutes | Not available | NOT VERIFIED |
-| HW-FR8-005 | H6 | Client that stops reading releases the slot | E7 | PASS |
-| HW-FR8-006 | Not run | Half-open client detection by keepalive | None | PENDING |
+| HW-FR8-003 | H7, H9 | New TCP client accepted after link return | E16 | PASS (2026-11-05: 5 of 5 after H9 outages. Was NOT VERIFIED in E7) |
+| HW-FR8-004 | H8 | Outage longer than 2 minutes | E15 | PASS (216 s outage, static IP restored, new client accepted, no reset) |
+| HW-FR8-005 | H6 | Client that stops reading releases the slot | E7, and [automated-test-results-h6-2026-11-05.md](../test-reports/automated-test-results-h6-2026-11-05.md) on `ce94f6077` | PASS (rerun 2026-11-05: `client stalled`, heap logged, next client accepted) |
+| HW-FR8-006 | R1 C1, C2 | Half-open client detected by keepalive and cleaned up | R1 | PASS (see the timing basis below) |
+| HW-FR8-007 | R1 Test 1 | Keepalive (idle 5 s, interval 2 s, 3 probes) set and read back on every client | R1 | PASS |
+| HW-FR8-008 | R1 Test B | Abrupt RST detected (`errno 104`) and cleaned up | R1 | PASS |
+| HW-FR8-009 | R1 Test D | Healthy idle client kept for 300 s | R1 | PASS |
+| HW-FR8-010 | R1 Test G | 200 connect and close cycles, stable heap | R1 | PASS |
+| HW-FR8-011 | R1 Test H | Graceful close with pending data: resources freed, bytes accounted | R1 | PASS |
+| HW-FR8-012 | R1, E16 | Heap stable across all sessions, no reset | R1, E16 | PASS |
 
 ### HW-FR8-001 and HW-FR8-002: Link Loss with Active Client (H7)
 
@@ -105,6 +122,36 @@ I (788826) NETWORK: TCP client connected: 192.168.1.170:63664
 
 Not run. With the ESP32 link kept up and the client removed, the expected result is `TCP client receive failed` after about 12 s, followed by a successful new connection.
 
+### HW-FR8-003: New Client After Link Return (H9, 2026-11-05)
+
+In each of the 5 H9 cycles, the session cut by the outage closed with `errno 113` and `socket error`, and a new client was accepted after the static IP returned. Details are in [HW-VAL-009](hw-validation-fr9.md).
+
+### HW-FR8-004: Outage Longer Than 2 Minutes (E15)
+
+```text
+I (84316) BRIDGE: TCP client closed: disconnected by peer
+W (105376) NETWORK: Ethernet link down
+I (321376) NETWORK: Ethernet link up: 100 Mbps, full duplex, MAC c0:cd:d6:61:ae:b3
+I (321376) NETWORK: IPv4 ready: 192.168.1.200, mask 255.255.255.0, gateway 192.168.1.1
+I (344036) NETWORK: TCP client connected: 192.168.1.170:61171
+```
+
+- **The outage lasted 216.0 s.** The ESP-NETIF lost-IP timer (120 s) expired during it, and the static IP still returned with the link.
+- **No client was open when the link went down**, so this test covers recovery, not session cleanup.
+- **The match to H8 is an inference** from the date and the outage length. The log does not name tests.
+
+### HW-FR8-006: Half-Open Detection (R1, C1 and C2)
+
+Twice, with the client cut off by `iptables`, the ESP32 logged `TCP client receive failed: errno 113` (keepalive abort), closed the session, logged the heap, and then accepted a new client.
+
+**Timing basis for the 30 s limit:**
+
+1. **The keepalive values are verified on the hardware:** every accepted client logs `TCP keepalive: idle 5 s, interval 2 s, 3 probes`, and the firmware reads each value back after setting it (R1, section 3.3).
+2. **Those values bound the detection time.** lwIP aborts a connection 5 s + 3 × 2 s = 11 s after the last segment it received. The block happens after that last segment, so detection takes at most about 11 s after the block.
+3. **The operator observed about 9 s** for C1 (R1, O1).
+
+No log records the moment of the block, so R1 reports the timing of C1 and C2 as INCONCLUSIVE. This record accepts the result on the three points above. A timestamped rerun would turn point 2 into a direct measurement (see "How to Run These Tests").
+
 ## How to Run These Tests
 
 **Before you start**
@@ -133,12 +180,22 @@ While the rule is in place, ping to the ESP32 also fails. Remove the rule before
 
 ## Status
 
-**FR-8: PARTIAL.** Link loss with an active client was handled safely on hardware. Reconnection after link return, the long outage and half-open detection are not verified.
+**FR-8: VALIDATED.**
+
+The following were all shown on hardware, and each session's resources were freed:
+- normal close;
+- abrupt RST;
+- stalled client;
+- link loss with an active client;
+- half-open connections, detected by keepalive.
+
+Healthy idle clients were kept, and heap stayed stable over 200 cycles. The 30 s limit for half-open detection rests on the verified keepalive configuration (at most about 11 s) and the operator's observation of about 9 s, not on a timestamped measurement.
+
+Previous status (2026-11-02): PARTIAL.
 
 ## Limitations and Pending Validation
 
-1. Half-open detection has not been tested.
-2. Reconnection after link return needs serial or terminal evidence.
-3. H8 needs its monitor output.
-4. Ping after link recovery has no retained evidence.
-5. The path between Ubuntu and the ESP32 was not confirmed.
+1. Half-open detection time has no timestamped measurement (see HW-FR8-006). A rerun with `date` before the block and the monitor on `--timestamps` would close it.
+2. R1 was run on firmware `8d79dbe83`. Its code is unchanged in the current source, but it has not been rerun on `ce94f6077`.
+3. HW-FR8-004 ran on firmware `23f991546`. Its static IP and Ethernet start-up code is unchanged since then. H9 repeated recovery on `ce94f6077` for outages up to 110 s.
+4. Test-to-log matching is by order and duration, because the logs do not name tests.

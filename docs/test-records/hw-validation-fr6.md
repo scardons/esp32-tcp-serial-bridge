@@ -37,7 +37,7 @@ The firmware was flashed and verified as recorded in [HW-VAL-009](hw-validation-
 | ID | Type | Source | Notes |
 |---|---|---|---|
 | E13 | Test report | [automated-test-results-2026-11-05.md](../test-reports/automated-test-results-2026-11-05.md), `npm test` finished 2026-11-05T17:17:00Z | 8 passed, 0 failed, H6 skipped. Its `Firmware` field reads "Not provided", because `BRIDGE_FIRMWARE` was not set; the firmware is identified by E14 |
-| E14 | Captured serial log | `fr9-h9-test.log`, 12:16:30 to 12:17:00 | The same boot as the flashed `ce94f6077`: no reset since 09:27:36. Not tracked by Git |
+| E14 | Captured serial log | `fr9-h9-test.log`, 12:16:30 to 12:17:00 | The same boot as the flashed `ce94f6077`: no reset since 09:27:36. Preserved as [docs/evidence/2026-11-05_h9-and-npm-test_fwce94f6077.log](../evidence/2026-11-05_h9-and-npm-test_fwce94f6077.log) |
 
 ## Test Summary
 

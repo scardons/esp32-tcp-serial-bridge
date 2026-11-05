@@ -59,8 +59,9 @@ The E7 session shows no reset after boot, and no `task_wdt`, panic, backtrace or
 | HW-FR4-007 | H3 | Binary echo, all 256 byte values, firmware `ce94f6077` | E13, E14 | PASS |
 | HW-FR4-008 | H4 | Sustained 256,000-byte transfer, firmware `ce94f6077` | E13, E14 | PASS |
 | HW-FR4-009 | H5 | No data from a previous session reaches a new client, firmware `ce94f6077` | E13, E14 | PASS |
+| HW-FR4-010 | H6 | Client that stops reading is disconnected, firmware `ce94f6077` | [automated-test-results-h6-2026-11-05.md](../test-reports/automated-test-results-h6-2026-11-05.md), [2026-11-05_h6_fwce94f6077.log](../evidence/2026-11-05_h6_fwce94f6077.log) | PASS |
 
-HW-FR4-006 to 009 supersede the PARTIAL and NOT VERIFIED results of HW-FR4-001 to 004, which are kept for history. HW-FR4-005 (H6) was not rerun: H6 was skipped in the 2026-11-05 run.
+HW-FR4-006 to 009 supersede the PARTIAL and NOT VERIFIED results of HW-FR4-001 to 004, which are kept for history. HW-FR4-010 reruns HW-FR4-005 (H6) on `ce94f6077`: `client stalled` 7.0 s after connecting, then a new client accepted.
 
 ### HW-FR4-001 to HW-FR4-003: Echo Tests (H2, H3, H4)
 
@@ -118,7 +119,7 @@ I (610876) BRIDGE: TCP client closed: client stalled
 | ID | Type | Source | Notes |
 |---|---|---|---|
 | E13 | Test report | [automated-test-results-2026-11-05.md](../test-reports/automated-test-results-2026-11-05.md), `npm test` finished 2026-11-05T17:17:00Z | 8 passed, 0 failed, H6 skipped. Its `Firmware` field reads "Not provided", because `BRIDGE_FIRMWARE` was not set; the firmware is identified by E14 |
-| E14 | Captured serial log | `fr9-h9-test.log`, 12:16:30 to 12:17:00 | The same boot as the flashed `ce94f6077`: no reset since 09:27:36. Not tracked by Git |
+| E14 | Captured serial log | `fr9-h9-test.log`, 12:16:30 to 12:17:00 | The same boot as the flashed `ce94f6077`: no reset since 09:27:36. Preserved as [docs/evidence/2026-11-05_h9-and-npm-test_fwce94f6077.log](../evidence/2026-11-05_h9-and-npm-test_fwce94f6077.log) |
 
 **Results (E13):**
 
@@ -171,12 +172,11 @@ The text must appear in the `nc` terminal unchanged.
 
 ## Status
 
-**FR-4: VALIDATED** (2026-11-05, firmware `ce94f6077`, through the loopback jumper at 115200 8N1). UART1 RX data reached the active client unchanged and in order, including every byte value and a 256,000-byte transfer, and none reached the next client after a session closed. The stalled-client path (HW-FR4-005) passed on earlier firmware.
+**FR-4: VALIDATED** (2026-11-05, firmware `ce94f6077`, through the loopback jumper at 115200 8N1). UART1 RX data reached the active client unchanged and in order, including every byte value and a 256,000-byte transfer, and none reached the next client after a session closed. The stalled-client path passed on `23f991546` (HW-FR4-005) and on `ce94f6077` (HW-FR4-010).
 
 ## Limitations
 
 1. UART data came only from the jumper, together with FR-3. An independent serial device was not tested (see "Testing FR-4 on its own").
-2. HW-FR4-005 (H6) was observed on firmware `23f991546`, not on `ce94f6077`.
-3. The E13 report does not name the firmware. It is identified by the serial log (E14).
-4. UART data can be lost without notice if TCP stalls longer than the UART RX buffer can absorb, about 178 ms. The driver provides no overflow counter.
-5. The Ubuntu network path was not confirmed, and NAT buffering could affect HW-FR4-005 timing.
+2. The E13 and H6 reports do not name the firmware. It is identified by the serial log of the same boot (E14).
+3. UART data is lost if TCP stalls longer than the UART RX buffer can absorb, about 178 ms. Since FR-7, that loss is counted and reported (`uart_rx_overflow`, `tcp_tx_bytes`), as the 2026-11-05 H6 run shows.
+4. For HW-FR4-005 the network path was not confirmed. For HW-FR4-010 the H6 path check found the ESP32 `on-link`, which is consistent with a direct link but does not prove it.
