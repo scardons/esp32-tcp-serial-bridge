@@ -287,6 +287,22 @@ static const char *run_session(int fd, pending_tx_t *pending_tx,
     }
 }
 
+// NFR-2: logged after a session, the deepest use of this task's stack, and
+// only when it reaches a new low, so repeated sessions add no lines.
+static void log_stack_low(void)
+{
+    static uint32_t s_stack_low = UINT32_MAX;
+    const uint32_t unused = (uint32_t)uxTaskGetStackHighWaterMark(NULL);
+
+    if (unused >= s_stack_low) {
+        return;
+    }
+
+    s_stack_low = unused;
+    ESP_LOGI(TAG, "Bridge stack: %" PRIu32 " of %d bytes never used", unused,
+             BRIDGE_TASK_STACK);
+}
+
 // Reads and counts UART input that has no client to go to.
 static int discard_uart_read(uint32_t timeout_ms)
 {
@@ -420,6 +436,7 @@ static void bridge_task(void *arg)
         // a while (TIME_WAIT, unacknowledged data), so a single value says little.
         ESP_LOGI(TAG, "Heap after session: %" PRIu32 " bytes free, %" PRIu32 " minimum ever",
                  esp_get_free_heap_size(), esp_get_minimum_free_heap_size());
+        log_stack_low();
 
         // Last step: a new client can only arrive after this socket is closed.
         atomic_store(&s_session_busy, false);

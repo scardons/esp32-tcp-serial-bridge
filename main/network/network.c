@@ -285,7 +285,12 @@ static void network_cleanup(void)
 
     // The glue holds a driver reference, so it must go before the driver.
     if (s_eth_glue != NULL) {
-        esp_eth_del_netif_glue(s_eth_glue);
+        const esp_err_t glue_err = esp_eth_del_netif_glue(s_eth_glue);
+
+        if (glue_err != ESP_OK) {
+            ESP_LOGW(TAG, "Failed to delete Ethernet glue: %s", esp_err_to_name(glue_err));
+        }
+
         s_eth_glue = NULL;
     }
 
@@ -405,6 +410,22 @@ static int open_listener(void)
     return fd;
 }
 
+// NFR-2: logged after a client is handled, the deepest use of this task's
+// stack, and only when it reaches a new low.
+static void log_server_stack_low(void)
+{
+    static uint32_t s_stack_low = UINT32_MAX;
+    const uint32_t unused = (uint32_t)uxTaskGetStackHighWaterMark(NULL);
+
+    if (unused >= s_stack_low) {
+        return;
+    }
+
+    s_stack_low = unused;
+    ESP_LOGI(TAG, "TCP server stack: %" PRIu32 " of %d bytes never used", unused,
+             TCP_SERVER_TASK_STACK);
+}
+
 static void accept_client(int *listen_fd)
 {
     struct sockaddr_in peer = {0};
@@ -497,6 +518,7 @@ static void tcp_server_task(void *arg)
 
         if (ready > 0) {
             accept_client(&listen_fd);
+            log_server_stack_low();
         }
     }
 
