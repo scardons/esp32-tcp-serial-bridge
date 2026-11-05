@@ -98,9 +98,9 @@ On the PC, the host tests pass (FR-7 reporter at 200 ms, 62/0, and at the real 1
 | ID | Type | Source | Notes |
 |---|---|---|---|
 | E9 | Captured tool output | Flash and verification of `ce94f6077`, recorded in [HW-VAL-009](hw-validation-fr9.md) | Full ELF SHA256 read back from flash |
-| E11 | Captured serial log | `fr9-h9-test.log`, from boot at 09:27:36 | One continuous boot. Preserved in [docs/evidence/](../evidence/2026-11-05_h9-and-npm-test_fwce94f6077.log) |
+| E11 | Captured serial log | `fr9-h9-test.log` (now [2026-11-05_monitor-session_fwce94f6077.log](../evidence/2026-11-05_monitor-session_fwce94f6077.log)), from boot at 09:27:36 | One continuous boot. Preserved in [docs/evidence/](../evidence/2026-11-05_h9-and-npm-test_fwce94f6077.log) |
 | E13 | Test report | [automated-test-results-2026-11-05.md](../test-reports/automated-test-results-2026-11-05.md) | `npm test` H1 to H5, 8 passed, H6 skipped |
-| E14 | Captured serial log | `fr9-h9-test.log`, 12:16:30 to 12:17:00, preserved in [docs/evidence/](../evidence/2026-11-05_h9-and-npm-test_fwce94f6077.log) | The `LOSS:` lines during E13, same boot as E11 |
+| E14 | Captured serial log | `fr9-h9-test.log` (now [2026-11-05_monitor-session_fwce94f6077.log](../evidence/2026-11-05_monitor-session_fwce94f6077.log)), 12:16:30 to 12:17:00, preserved in [docs/evidence/](../evidence/2026-11-05_h9-and-npm-test_fwce94f6077.log) | The `LOSS:` lines during E13, same boot as E11 |
 | R1 | Test report | [TR-FR8-002](../testing/FR-8-TEST-REPORT.md), firmware `8d79dbe83` | Test H: graceful close with 95 bytes pending, `session_bytes=31` and `no_client_bytes=64`, `no data loss` |
 | E21 | Test report and serial log | [automated-test-results-h6-2026-11-05.md](../test-reports/automated-test-results-h6-2026-11-05.md) and [2026-11-05_h6_fwce94f6077.log](../evidence/2026-11-05_h6_fwce94f6077.log), firmware `ce94f6077`, H6 finished 2026-11-05T18:03:48Z | 5 of 5 passed. Same boot as E11, no reset since 09:27:36 |
 | E23 | Test report and serial log | [921600 report](../test-reports/automated-test-results-921600-2026-11-05.md) and [log](../evidence/2026-11-05_921600_fwc903d6e80.log), 921600 build of the current source | Supporting evidence, not a plan test. Real loss on the wire (H3 short by 9 bytes, H4 by 20) was detected and reported as `W LOSS: DATA LOSS: uart_rx_overflow=2` and `=1` |

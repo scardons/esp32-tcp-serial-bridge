@@ -19,6 +19,31 @@ TCP client  <---- port 4001 ---->  ESP32  <---- TX GPIO32 / RX GPIO33 ---->  Ser
 - **Recovery:** a client that accepts no data for 5 s is disconnected. The bridge also handles Ethernet link loss and returns without a restart. Each outage is numbered on UART0 (`Ethernet link down (#n)`, `Ethernet link restored after <x.x> s outage (#n)`, `Static IP restored after link recovery (#n)`).
 - **Loss reporting:** one `LOSS:` line every 10 s on UART0. See [the FR-7 design](docs/fr7-data-loss-reporting.md).
 
+## Design Decisions
+
+| Decision | Reason |
+|---|---|
+| **One `bridge` task** moves data both ways. It waits on `select()` for TCP input (10 ms timeout) and sends with non-blocking `send()` | One owner for the session state and both buffers, so they need no locking. The timeout also paces send retries, so a socket that accepts nothing cannot cause a busy loop |
+| **Two static 256-byte buffers**, one per direction, and no `malloc` in application code | Memory use is fixed and visible at build time ([Memory and Buffers](#memory-and-buffers)), with nothing to leak |
+| **One client at a time.** An atomic `session busy` flag and a one-entry queue hand a socket to the bridge, and the TCP server closes any other client at once | The requirement (FR-2), and a serial line has only one owner. The first client keeps working |
+| **Backpressure instead of buffering.** The bridge writes to UART1 only within a 100 ms TX budget (87 µs per byte at 115200) and otherwise stops reading TCP, so the TCP window slows the client | `uart_write_bytes()` spins when its TX ring is full. Keeping the queued time under 100 ms means it never spins, and a fast client cannot overrun the UART |
+| **Session isolation.** UART input is discarded while no client is connected, and what UART1 still holds when a session ends is drained and counted | Data from one session never reaches the next client (H5) |
+| **A client that accepts nothing for 5 s is aborted** with `SO_LINGER {1, 0}` | A stalled client would otherwise hold the only slot. A normal close would queue a FIN behind unsent data that never leaves |
+| **TCP keepalive (idle 5 s, interval 2 s, 3 probes)** is set and read back on every client, and a client is rejected if any value can't be confirmed | Detects half-open clients in about 11 s, within FR-8's 30 s, instead of lwIP's two-hour default |
+| **Static IPv4 with the DHCP client stopped.** A link down ends the session, and the static address is applied again when the link returns | FR-1 and FR-9. Each outage is numbered in the log, with its duration and the IP check |
+| **Loss counters are lock-free atomics**, reported by their own task (priority 3, below the bridge's 5) every 10 s | They are counted from the bridge and the UART interrupt without locks, and logging cannot delay the data path (FR-7) |
+| **Ethernet starts even if the bridge cannot** | The board stays reachable for diagnosis. Only the TCP server depends on the bridge |
+| **The firmware is identified by its ELF SHA256**, printed at boot | Two builds of uncommitted changes can share the same version string. Every test record cites the SHA256 |
+| **The baud rate is a menuconfig option** (default 115200), and the frame format is fixed at 8N1 | FR-5. The bridge's per-byte timing is derived from the configured rate |
+
+## Assumptions
+
+- **Hardware:** ESP32-Ethernet-Kit v1.2 (ESP32-WROVER-E) with the IP101 PHY, RMII with the 50 MHz clock from the PHY on GPIO0, MDC GPIO23, MDIO GPIO18 and PHY reset GPIO5.
+- **Network:** a trusted local network, 192.168.1.0/24, with the bridge at the static address `192.168.1.200` and no other host using it.
+- **Clients:** one client at a time, which tolerates TCP backpressure (its writes slow down when the UART is busy).
+- **Serial device:** 3.3 V logic, 8N1, no hardware flow control, at 115200 baud.
+- **Testing:** the GPIO32 to GPIO33 jumper for every echo test, a Linux PC on the same subnet, Node.js 22.18 or later, Python 3 for H6, `gcc` for the host tests, and ESP-IDF v6.1.
+
 ## Requirements Status
 
 Requirement text from *ESP32 Serial-to-TCP Bridge: Requirements v1.0*. Each status comes from the hardware validation record linked in the last column, and every **Validated** status cites hardware evidence there.
@@ -98,13 +123,27 @@ The application allocates no heap memory itself. The bridge, server and reporter
 
 The 2026-11-05 `npm test` and H6 reports don't name the firmware, because `BRIDGE_FIRMWARE` was not set. It is identified from the serial log of the same boot. The serial logs behind these results are kept in [`docs/evidence/`](docs/evidence/).
 
-### Known Issues
+## Known Limitations
 
+- **No security.** No authentication or encryption: any host that can reach port 4001 can use the serial line while the slot is free.
+- **One client, IPv4 only, static address only.** There is no DHCP fallback and no runtime configuration: IP, port and baud rate change only through `idf.py menuconfig` and a rebuild.
+- **921600 loses data.** Under sustained traffic the UART1 hardware FIFO overflows (H3 lost 9 bytes and H4 20). The loss is detected and reported as `uart_rx_overflow`. 115200 is the validated rate.
+- **No RTS/CTS.** Flow control toward the serial device is only the bridge's TX pacing.
 - **`LOSS:` lines report detected loss only.** "No data loss" can appear after an abnormal session, because data held in lwIP buffers isn't visible to the firmware. Data still held by UART1 is counted.
 - **H5 can end either way.** The close races with the echo, so the report may or may not show loss, and `tcp_send_failures` may be 0 or 1. Only the isolation result matters for H5.
-- **921600 loses data.** Under sustained traffic the UART1 hardware FIFO overflows (H3 lost 9 bytes and H4 20). The loss is detected and reported as `uart_rx_overflow`. Use 115200, the validated rate.
-- **The FR-7 line-error and break counters** have only been exercised by the host tests.
 - **Frame-error storms are capped.** Above 2,000 frame errors and breaks in one interval, their interrupts pause until the next report, and `rx_error_pauses` shows it. The counts for that interval are a lower bound.
+- **Not verified on hardware:** FR-7's line-error, break and link-loss-in-flight cases (HW-FR7-004, 006, 009), and a timestamped measurement of half-open detection time (FR-8).
+- **Test method:** the jumper loops UART1 to itself, so the two directions are verified together, and UART1 was never observed with a logic analyzer. `network.c` has no host tests; it is covered by hardware tests.
+
+## Potential Improvements
+
+- **Support 921600:** lower the UART RX FIFO full threshold and move the UART interrupt to IRAM, then rerun H2 to H4 and the soak at that rate.
+- **Optional RTS/CTS** hardware flow control, as a menuconfig option.
+- **Runtime configuration** of IP, port and baud rate, stored in NVS, through a console command or a small setup interface.
+- **Access control:** an IP allowlist, or TLS for clients outside a trusted network.
+- **Watchdog:** subscribe the `bridge` task to the task watchdog. It is not subscribed today.
+- **CI:** run the host tests (ASan, UBSan, TSan) and `idf.py build` on every push.
+- **Test automation:** a USB-controlled Ethernet switch to automate H7 to H9, and a logic analyzer or a USB-UART adapter to verify each UART direction separately and to run HW-FR7-004, 006 and 009.
 
 ## Hardware
 
@@ -223,6 +262,16 @@ RUN_H6=true BRIDGE_FIRMWARE=<ELF SHA256> BRIDGE_REPORT_PATH=docs/test-reports/<n
 
 The host and port can be changed with `BRIDGE_HOST` and `BRIDGE_PORT`, and the expected UART rate with `BRIDGE_BAUD` (default 115200). For the full test guide, see [`tests/README.md`](tests/README.md).
 
+## Deliverables
+
+| Item | Requirement | Status | Evidence |
+|---|---|---|---|
+| D-1 | Repository builds from a clean checkout with `idf.py build` and ESP-IDF v6.1 | **PASS** | 2026-11-05: `main` (`c2f43c0`) cloned from GitHub into an empty directory, then `idf.py set-target esp32` and `idf.py build` with ESP-IDF v6.1: exit 0, no errors, no warnings. The `sdkconfig` generated from `sdkconfig.defaults` and `main/Kconfig.projbuild` is identical, option for option, to the one of the hardware-tested firmware. No external components are needed |
+| D-2 | README with design decisions, assumptions, known limitations and potential improvements | **PASS** | [Design Decisions](#design-decisions), [Assumptions](#assumptions), [Known Limitations](#known-limitations), [Potential Improvements](#potential-improvements) |
+| D-3 | 15-minute walkthrough call, with one small live code change | **PENDING** until the call | Agenda and live-change plan in [docs/walkthrough.md](docs/walkthrough.md) |
+| Process | Firmware tested manually on the same hardware | **PASS** | One ESP32-Ethernet-Kit v1.2 (MAC `c0:cd:d6:61:ae:b3` in every log). Procedures in [manual-test-procedures.md](docs/test-reports/manual-test-procedures.md) and in each record's *How to Run These Tests*. Serial logs in [`docs/evidence/`](docs/evidence/) |
+| Process (optional) | Firmware stress-test script | **PASS** | `npm run manual:soak` ([`tests/manual/soak.ts`](tests/manual/soak.ts)): 15 minutes, 33 of 33 sessions ([NFR-3](docs/test-records/validation-nfr3.md)). Also H4 (256,000 bytes) and H6 (UART flood up to 100 s) |
+
 ## Project Layout
 
 ```text
@@ -241,5 +290,6 @@ docs/
   test-records/       Validation record for each FR and NFR, with how to run its tests
   test-reports/       Generated test reports and manual procedures
   testing/            Per-requirement test reports (FR-8)
-  evidence/           Serial logs cited by the records
+  evidence/           Serial logs and packet captures cited by the records
+  walkthrough.md      D-3 walkthrough agenda and live-change plan
 ```
